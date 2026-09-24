@@ -104,6 +104,22 @@ pipeline milestone.
 
 ## Verification queries
 
+Repeatable verification scripts are stored in:
+
+    data/oltp/sqlserver/tests/verify_initial_schema.sql
+    data/oltp/sqlserver/tests/initial_schema_smoke.sql
+
+Run either file from the repository root with the same secret-safe pattern:
+
+~~~powershell
+Get-Content -Raw ".\data\oltp\sqlserver\tests\verify_initial_schema.sql" |
+  docker compose --env-file ".\infrastructure\.env" -f ".\infrastructure\docker-compose.yml" exec -T sqlserver /bin/bash -lc '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -b -i /dev/stdin'
+~~~
+
+The smoke test inserts a complete business path inside a transaction, verifies
+the update trigger, rolls the transaction back, confirms that no test row
+remains, and verifies that an invalid course is rejected by a check constraint.
+
 List the seven domain tables:
 
 ~~~sql
