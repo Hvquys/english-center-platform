@@ -1,0 +1,40 @@
+# .NET build output
+**/bin/
+**/obj/
+
+# Node.js dependencies and build output
+**/node_modules/
+**/dist/
+**/dist-ssr/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs and test output
+*.log
+logs/
+coverage/
+TestResults/
+
+# IDE and operating-system files
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Local database and certificate artifacts
+*.db
+*.db-shm
+*.db-wal
+*.pfx
+*.key
+*.pem
+
