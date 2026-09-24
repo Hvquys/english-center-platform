@@ -1,0 +1,167 @@
+name: english-center-platform
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: "${SQLSERVER_SA_PASSWORD:?Set SQLSERVER_SA_PASSWORD in infrastructure/.env}"
+    ports:
+      - "${SQLSERVER_PORT:-1433}:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - app-network
+
+  api:
+    build:
+      context: ../apps/backend/EnglishCenter.Api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__SqlServer: "Server=sqlserver,1433;Database=EnglishCenter;User Id=sa;Password=${SQLSERVER_SA_PASSWORD};TrustServerCertificate=True"
+      Cors__AllowedOrigins__0: http://localhost:${WEB_PORT:-5173}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://localhost:8080/api/health]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    networks:
+      - app-network
+
+  web:
+    build:
+      context: ../apps/web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5173}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, --quiet, --tries=1, --spider, http://127.0.0.1/health]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+    networks:
+      - app-network
+
+  redis:
+    image: redis:8.2-alpine
+    profiles: [integration]
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - "${REDIS_PASSWORD:?Set REDIS_PASSWORD in infrastructure/.env}"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - -a
+        - "${REDIS_PASSWORD}"
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:4.2-management-alpine
+    profiles: [integration]
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ecp_app}
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in infrastructure/.env}"
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - app-network
+
+  postgres-dwh:
+    image: postgres:18-alpine
+    profiles: [data]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DWH_DATABASE:-english_center_dwh}
+      POSTGRES_USER: ${POSTGRES_DWH_USER:-ecp_dwh}
+      POSTGRES_PASSWORD: "${POSTGRES_DWH_PASSWORD:?Set POSTGRES_DWH_PASSWORD in infrastructure/.env}"
+    ports:
+      - "${POSTGRES_DWH_PORT:-5432}:5432"
+    volumes:
+      - postgres-dwh-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - data-network
+
+  minio:
+    image: quay.io/minio/minio:latest
+    profiles: [data]
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ecp_minio}
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in infrastructure/.env}"
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: [CMD, mc, ready, local]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - data-network
+
+networks:
+  app-network:
+    driver: bridge
+  data-network:
+    driver: bridge
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  rabbitmq-data:
+  postgres-dwh-data:
+  minio-data:
