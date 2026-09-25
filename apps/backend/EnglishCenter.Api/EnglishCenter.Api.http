@@ -37,3 +37,13 @@ Accept: application/json
 
 GET {{EnglishCenter.Api_HostAddress}}/api/enrollments?page=1&pageSize=20
 Accept: application/json
+
+###
+
+GET {{EnglishCenter.Api_HostAddress}}/api/attendance?page=1&pageSize=20
+Accept: application/json
+
+###
+
+GET {{EnglishCenter.Api_HostAddress}}/api/payments?page=1&pageSize=20
+Accept: application/json

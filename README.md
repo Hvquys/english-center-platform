@@ -109,6 +109,23 @@ The script verifies course activation, class opening, tuition defaults,
 duplicate enrollment and capacity conflicts, lifecycle transitions, search and
 filters, soft-delete cleanup, and OpenAPI coverage.
 
+## Attendance and payment API verification
+
+Attendance records are accepted only for active enrollments while the class is
+`IN_PROGRESS`. A student can have one attendance record per class date. Payment
+records start as `PENDING`; completing a payment checks that the total completed
+amount does not exceed the enrollment's agreed tuition. Both modules support
+paging, filters, soft delete, ETag/If-Match, and row-version conflict handling.
+
+Run the end-to-end acceptance check:
+
+```powershell
+.\scripts\api\verify-attendance-payment-api.ps1
+```
+
+The script verifies attendance date and duplicate guards, payment lifecycle and
+overpayment prevention, stale-write handling, filters, cleanup, and OpenAPI.
+
 ## Project documentation
 
 - The project-wide build journal covers the complete M1-M10 delivery process.
