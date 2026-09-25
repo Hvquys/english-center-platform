@@ -48,6 +48,30 @@ timestamps, and row-version behavior:
 `EnglishCenter` database created in TASK-003. This proves that the migration
 can build a clean database without overwriting local operational data.
 
+## API foundation verification
+
+The backend is organized as a modular monolith. Each business area keeps its
+controller, request/response contracts, service, and dependency registration
+under `Modules/<ModuleName>`. Shared HTTP behavior lives under `Api`, including
+OpenAPI, model validation, RFC Problem Details responses, and global exception
+handling.
+
+Start or rebuild the API and its SQL Server dependency:
+
+```powershell
+docker compose --env-file .\infrastructure\.env `
+  -f .\infrastructure\docker-compose.yml up -d --build api
+```
+
+Run the repeatable acceptance check:
+
+```powershell
+.\scripts\api\verify-api-foundation.ps1
+```
+
+The script verifies API and SQL Server health, OpenAPI paths, `404`, `405`, and
+validation `400` Problem Details responses, the Students module boundary, and
+the browser CORS preflight. Every check must report `PASS`.
 ## Project documentation
 
 - The project-wide build journal covers the complete M1-M10 delivery process.

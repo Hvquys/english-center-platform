@@ -1,4 +1,8 @@
+using EnglishCenter.Api.Api;
+using EnglishCenter.Api.Api.ErrorHandling;
 using EnglishCenter.Api.Infrastructure.Persistence;
+using EnglishCenter.Api.Modules.Health;
+using EnglishCenter.Api.Modules.Students;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,8 +17,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddApiFoundation();
 
 var sqlServerConnectionString = builder.Configuration.GetConnectionString("SqlServer")
     ?? throw new InvalidOperationException(
@@ -22,6 +25,9 @@ var sqlServerConnectionString = builder.Configuration.GetConnectionString("SqlSe
 
 builder.Services.AddDbContext<EnglishCenterDbContext>(options =>
     options.UseSqlServer(sqlServerConnectionString));
+
+builder.Services.AddHealthModule();
+builder.Services.AddStudentsModule();
 
 builder.Services.AddCors(options =>
 {
@@ -36,6 +42,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+app.UseStatusCodePages(StatusCodeProblemDetails.WriteAsync);
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -48,3 +57,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program;
