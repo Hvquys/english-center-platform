@@ -3,6 +3,7 @@ using EnglishCenter.Api.Api.ErrorHandling;
 using EnglishCenter.Api.Infrastructure.Persistence;
 using EnglishCenter.Api.Modules.Health;
 using EnglishCenter.Api.Modules.Students;
+using EnglishCenter.Api.Modules.Teachers;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +29,7 @@ builder.Services.AddDbContext<EnglishCenterDbContext>(options =>
 
 builder.Services.AddHealthModule();
 builder.Services.AddStudentsModule();
+builder.Services.AddTeachersModule();
 
 builder.Services.AddCors(options =>
 {

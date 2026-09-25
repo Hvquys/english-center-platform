@@ -12,3 +12,13 @@ Accept: application/json
 
 GET {{EnglishCenter.Api_HostAddress}}/api/not-found
 Accept: application/problem+json
+
+###
+
+GET {{EnglishCenter.Api_HostAddress}}/api/students?page=1&pageSize=20
+Accept: application/json
+
+###
+
+GET {{EnglishCenter.Api_HostAddress}}/api/teachers?page=1&pageSize=20
+Accept: application/json

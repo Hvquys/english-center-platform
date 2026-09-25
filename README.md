@@ -72,6 +72,24 @@ Run the repeatable acceptance check:
 The script verifies API and SQL Server health, OpenAPI paths, `404`, `405`, and
 validation `400` Problem Details responses, the Students module boundary, and
 the browser CORS preflight. Every check must report `PASS`.
+## People API verification
+
+The Students and Teachers modules provide paged search, detail, create, update,
+and soft-delete endpoints. Update requests carry the Base64 `rowVersion`
+returned by the previous response. Delete requests send the same value in the
+`If-Match` header. A stale version returns HTTP `409`, preventing a later write
+from silently overwriting an earlier one.
+
+Run the end-to-end CRUD acceptance check against the Docker API:
+
+```powershell
+.\scripts\api\verify-people-api.ps1
+```
+
+The script creates isolated test records, verifies paging and filters, updates
+them, confirms stale-write protection, soft-deletes them, proves the deleted
+codes remain reserved, and checks the OpenAPI operations.
+
 ## Project documentation
 
 - The project-wide build journal covers the complete M1-M10 delivery process.

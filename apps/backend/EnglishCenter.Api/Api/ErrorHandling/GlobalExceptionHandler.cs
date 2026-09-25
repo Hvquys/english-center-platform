@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -68,6 +69,11 @@ public sealed class GlobalExceptionHandler(
                 "One or more validation errors occurred.",
                 validationException.Message,
                 validationException.Errors.ToDictionary()),
+            DbUpdateException { InnerException: SqlException { Number: 2601 or 2627 } } => (
+                StatusCodes.Status409Conflict,
+                "A unique value is already in use.",
+                "Reload the data and use a different unique value.",
+                null),
             DbUpdateConcurrencyException => (
                 StatusCodes.Status409Conflict,
                 "The resource was changed by another request.",

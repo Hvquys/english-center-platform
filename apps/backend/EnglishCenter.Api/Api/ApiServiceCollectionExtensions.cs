@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using EnglishCenter.Api.Api.ErrorHandling;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +8,9 @@ public static class ApiServiceCollectionExtensions
 {
     public static IServiceCollection AddApiFoundation(this IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options =>
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         services.AddOpenApi();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails(options =>
