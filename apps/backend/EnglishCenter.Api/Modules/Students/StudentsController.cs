@@ -1,11 +1,14 @@
 using EnglishCenter.Api.Api.Concurrency;
 using EnglishCenter.Api.Api.Paging;
+using EnglishCenter.Api.Modules.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnglishCenter.Api.Modules.Students;
 
 [ApiController]
 [Route("api/students")]
+[Authorize(Policy = AuthorizationPolicies.StaffOperations)]
 public sealed class StudentsController(IStudentService studentService) : ControllerBase
 {
     [HttpGet]

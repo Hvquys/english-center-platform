@@ -1,10 +1,13 @@
 using EnglishCenter.Api.Api.Concurrency;
 using EnglishCenter.Api.Api.Paging;
+using EnglishCenter.Api.Modules.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnglishCenter.Api.Modules.Payments;
 
 [ApiController, Route("api/payments")]
+[Authorize(Policy = AuthorizationPolicies.StaffOperations)]
 public sealed class PaymentsController(IPaymentService service) : ControllerBase
 {
     [HttpGet, ProducesResponseType<PagedResponse<PaymentResponse>>(StatusCodes.Status200OK)]

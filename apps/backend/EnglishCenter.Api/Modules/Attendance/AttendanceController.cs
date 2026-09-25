@@ -1,10 +1,13 @@
 using EnglishCenter.Api.Api.Concurrency;
 using EnglishCenter.Api.Api.Paging;
+using EnglishCenter.Api.Modules.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnglishCenter.Api.Modules.Attendance;
 
 [ApiController, Route("api/attendance")]
+[Authorize(Policy = AuthorizationPolicies.TeachingOperations)]
 public sealed class AttendanceController(IAttendanceService service) : ControllerBase
 {
     [HttpGet, ProducesResponseType<PagedResponse<AttendanceResponse>>(StatusCodes.Status200OK)]

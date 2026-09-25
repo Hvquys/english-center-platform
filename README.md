@@ -48,6 +48,18 @@ timestamps, and row-version behavior:
 `EnglishCenter` database created in TASK-003. This proves that the migration
 can build a clean database without overwriting local operational data.
 
+If the operational database was originally created by the TASK-003 SQL script,
+record that verified schema as the initial EF baseline once, then apply later
+migrations normally:
+
+```powershell
+.\scripts\database\baseline-ef-operational-database.ps1
+.\scripts\database\update-ef-database.ps1 -DatabaseName EnglishCenter
+```
+
+The baseline script refuses to continue unless all seven original business
+tables exist. It does not recreate or delete operational data.
+
 ## API foundation verification
 
 The backend is organized as a modular monolith. Each business area keeps its
@@ -72,6 +84,27 @@ Run the repeatable acceptance check:
 The script verifies API and SQL Server health, OpenAPI paths, `404`, `405`, and
 validation `400` Problem Details responses, the Students module boundary, and
 the browser CORS preflight. Every check must report `PASS`.
+
+## JWT authentication and RBAC verification
+
+The API issues short-lived JWT access tokens and rotates opaque refresh tokens.
+Only a SHA-256 hash of each refresh token is stored. Passwords use ASP.NET Core
+Identity's password hasher. Roles are `ADMIN`, `STAFF`, `TEACHER`, and
+`STUDENT`.
+
+Set strong local-only values in `infrastructure/.env` for
+`JWT_SIGNING_KEY`, `AUTH_BOOTSTRAP_ADMIN_EMAIL`, and
+`AUTH_BOOTSTRAP_ADMIN_PASSWORD`. The Compose file passes them to the API; the
+real values stay outside Git. Then run:
+
+```powershell
+.\scripts\api\verify-auth-rbac.ps1
+```
+
+The test checks unauthenticated `401`, invalid-login `401`, forbidden `403`,
+all four roles, policy boundaries, `/api/auth/me`, refresh-token rotation,
+logout revocation, cleanup, and OpenAPI auth paths. The existing API acceptance
+scripts obtain a local admin token without printing credentials or tokens.
 
 ## People API verification
 

@@ -1,5 +1,13 @@
 namespace EnglishCenter.Api.Domain.Enums;
 
+public enum AppUserRole
+{
+    ADMIN,
+    STAFF,
+    TEACHER,
+    STUDENT
+}
+
 public enum StudentStatus
 {
     ACTIVE,

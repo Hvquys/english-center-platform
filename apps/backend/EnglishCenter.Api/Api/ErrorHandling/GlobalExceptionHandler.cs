@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace EnglishCenter.Api.Api.ErrorHandling;
@@ -54,6 +54,11 @@ public sealed class GlobalExceptionHandler(
     {
         return exception switch
         {
+            AuthenticationFailedException => (
+                StatusCodes.Status401Unauthorized,
+                "Authentication failed.",
+                exception.Message,
+                null),
             ResourceNotFoundException => (
                 StatusCodes.Status404NotFound,
                 "Resource not found.",

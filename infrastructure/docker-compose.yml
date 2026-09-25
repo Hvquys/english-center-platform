@@ -32,6 +32,9 @@ services:
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__SqlServer: "Server=sqlserver,1433;Database=EnglishCenter;User Id=sa;Password=${SQLSERVER_SA_PASSWORD};TrustServerCertificate=True"
       Cors__AllowedOrigins__0: http://localhost:${WEB_PORT:-5173}
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in infrastructure/.env}"
+      Auth__BootstrapAdmin__Email: "${AUTH_BOOTSTRAP_ADMIN_EMAIL:?Set AUTH_BOOTSTRAP_ADMIN_EMAIL in infrastructure/.env}"
+      Auth__BootstrapAdmin__Password: "${AUTH_BOOTSTRAP_ADMIN_PASSWORD:?Set AUTH_BOOTSTRAP_ADMIN_PASSWORD in infrastructure/.env}"
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:

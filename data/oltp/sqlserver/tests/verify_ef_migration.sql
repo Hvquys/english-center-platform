@@ -6,18 +6,19 @@ GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
-DECLARE @ExpectedTables int = 7;
-DECLARE @ExpectedForeignKeys int = 6;
-DECLARE @ExpectedCheckConstraints int = 15;
+DECLARE @ExpectedTables int = 9;
+DECLARE @ExpectedForeignKeys int = 9;
+DECLARE @ExpectedCheckConstraints int = 16;
 DECLARE @ExpectedTriggers int = 7;
-DECLARE @ExpectedMigrationRows int = 1;
+DECLARE @ExpectedMigrationRows int = 2;
 
 DECLARE @ActualTables int = (
     SELECT COUNT(*)
     FROM sys.tables
     WHERE name IN (
         'Students', 'Teachers', 'Courses', 'Classes',
-        'Enrollments', 'AttendanceRecords', 'Payments'
+        'Enrollments', 'AttendanceRecords', 'Payments',
+        'AppUsers', 'RefreshTokens'
     )
 );
 
@@ -28,7 +29,9 @@ DECLARE @ActualForeignKeys int = (
         OBJECT_ID('dbo.Classes'),
         OBJECT_ID('dbo.Enrollments'),
         OBJECT_ID('dbo.AttendanceRecords'),
-        OBJECT_ID('dbo.Payments')
+        OBJECT_ID('dbo.Payments'),
+        OBJECT_ID('dbo.AppUsers'),
+        OBJECT_ID('dbo.RefreshTokens')
     )
 );
 
@@ -42,7 +45,8 @@ DECLARE @ActualCheckConstraints int = (
         OBJECT_ID('dbo.Classes'),
         OBJECT_ID('dbo.Enrollments'),
         OBJECT_ID('dbo.AttendanceRecords'),
-        OBJECT_ID('dbo.Payments')
+        OBJECT_ID('dbo.Payments'),
+        OBJECT_ID('dbo.AppUsers')
     )
 );
 
@@ -65,15 +69,15 @@ DECLARE @ActualMigrationRows int = (
 );
 
 IF @ActualTables <> @ExpectedTables
-    THROW 51001, 'EF verification failed: expected 7 domain tables.', 1;
+    THROW 51001, 'EF verification failed: expected 9 application tables.', 1;
 IF @ActualForeignKeys <> @ExpectedForeignKeys
-    THROW 51002, 'EF verification failed: expected 6 foreign keys.', 1;
+    THROW 51002, 'EF verification failed: expected 9 foreign keys.', 1;
 IF @ActualCheckConstraints <> @ExpectedCheckConstraints
-    THROW 51003, 'EF verification failed: expected 15 check constraints.', 1;
+    THROW 51003, 'EF verification failed: expected 16 check constraints.', 1;
 IF @ActualTriggers <> @ExpectedTriggers
     THROW 51004, 'EF verification failed: expected 7 update triggers.', 1;
 IF @ActualMigrationRows <> @ExpectedMigrationRows
-    THROW 51005, 'EF verification failed: expected 1 migration history row.', 1;
+    THROW 51005, 'EF verification failed: expected 2 migration history rows.', 1;
 
 IF NOT EXISTS (
     SELECT 1

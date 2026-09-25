@@ -357,3 +357,84 @@ internal sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         AuditableEntityConfiguration.Configure(builder);
     }
 }
+
+internal sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
+{
+    public void Configure(EntityTypeBuilder<AppUser> builder)
+    {
+        builder.ToTable("AppUsers", table =>
+            table.HasCheckConstraint(
+                "CK_AppUsers_Role",
+                "[role] IN ('ADMIN', 'STAFF', 'TEACHER', 'STUDENT')"));
+
+        builder.HasKey(entity => entity.UserId).HasName("PK_AppUsers");
+        builder.Property(entity => entity.UserId).HasColumnName("user_id");
+        builder.Property(entity => entity.Email).HasColumnName("email").HasMaxLength(320);
+        builder.Property(entity => entity.PasswordHash).HasColumnName("password_hash").HasMaxLength(500);
+        builder.Property(entity => entity.Role)
+            .HasColumnName("role")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsUnicode(false);
+        builder.Property(entity => entity.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+        builder.Property(entity => entity.StudentId).HasColumnName("student_id");
+        builder.Property(entity => entity.TeacherId).HasColumnName("teacher_id");
+        builder.Property(entity => entity.CreatedAtUtc)
+            .HasColumnName("created_at_utc")
+            .HasColumnType("datetime2(3)")
+            .HasDefaultValueSql("SYSUTCDATETIME()");
+        builder.Property(entity => entity.UpdatedAtUtc)
+            .HasColumnName("updated_at_utc")
+            .HasColumnType("datetime2(3)")
+            .HasDefaultValueSql("SYSUTCDATETIME()");
+
+        builder.HasOne(entity => entity.Student)
+            .WithOne()
+            .HasForeignKey<AppUser>(entity => entity.StudentId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_AppUsers_Students");
+        builder.HasOne(entity => entity.Teacher)
+            .WithOne()
+            .HasForeignKey<AppUser>(entity => entity.TeacherId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_AppUsers_Teachers");
+
+        builder.HasIndex(entity => entity.Email).IsUnique().HasDatabaseName("UQ_AppUsers_Email");
+        builder.HasIndex(entity => entity.StudentId)
+            .IsUnique()
+            .HasFilter("[student_id] IS NOT NULL")
+            .HasDatabaseName("UQ_AppUsers_StudentId");
+        builder.HasIndex(entity => entity.TeacherId)
+            .IsUnique()
+            .HasFilter("[teacher_id] IS NOT NULL")
+            .HasDatabaseName("UQ_AppUsers_TeacherId");
+    }
+}
+
+internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
+{
+    public void Configure(EntityTypeBuilder<RefreshToken> builder)
+    {
+        builder.ToTable("RefreshTokens");
+        builder.HasKey(entity => entity.RefreshTokenId).HasName("PK_RefreshTokens");
+        builder.Property(entity => entity.RefreshTokenId).HasColumnName("refresh_token_id");
+        builder.Property(entity => entity.UserId).HasColumnName("user_id");
+        builder.Property(entity => entity.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsUnicode(false);
+        builder.Property(entity => entity.ExpiresAtUtc).HasColumnName("expires_at_utc").HasColumnType("datetime2(3)");
+        builder.Property(entity => entity.RevokedAtUtc).HasColumnName("revoked_at_utc").HasColumnType("datetime2(3)");
+        builder.Property(entity => entity.CreatedAtUtc)
+            .HasColumnName("created_at_utc")
+            .HasColumnType("datetime2(3)")
+            .HasDefaultValueSql("SYSUTCDATETIME()");
+
+        builder.HasOne(entity => entity.User)
+            .WithMany(user => user.RefreshTokens)
+            .HasForeignKey(entity => entity.UserId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName("FK_RefreshTokens_AppUsers");
+
+        builder.HasIndex(entity => entity.TokenHash).IsUnique().HasDatabaseName("UQ_RefreshTokens_TokenHash");
+        builder.HasIndex(entity => new { entity.UserId, entity.ExpiresAtUtc })
+            .HasDatabaseName("IX_RefreshTokens_UserExpiry");
+    }
+}

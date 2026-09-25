@@ -2,10 +2,15 @@
 param(
     [Parameter()]
     [ValidatePattern('^https?://[^\s/]+(?::\d+)?$')]
-    [string]$BaseUrl = 'http://localhost:8080'
+    [string]$BaseUrl = 'http://localhost:8080',
+
+    [Parameter()]
+    [string]$AccessToken
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'auth-test-support.ps1')
+if ([string]::IsNullOrWhiteSpace($AccessToken)) { $AccessToken = Get-AdminAuthToken $BaseUrl }
 
 function Invoke-JsonRequest {
     param(
@@ -13,7 +18,7 @@ function Invoke-JsonRequest {
         [Parameter(Mandatory)][ValidateSet('GET', 'POST', 'PUT')][string]$Method,
         [Parameter()][object]$Body
     )
-    $parameters = @{ UseBasicParsing = $true; Uri = $Uri; Method = $Method }
+    $parameters = @{ UseBasicParsing = $true; Uri = $Uri; Method = $Method; Headers = (Merge-AuthorizationHeaders) }
     if ($PSBoundParameters.ContainsKey('Body')) {
         $parameters.Body = $Body | ConvertTo-Json -Depth 8
         $parameters.ContentType = 'application/json'
@@ -36,7 +41,7 @@ function Invoke-ExpectedProblem {
             $parameters.Body = $Body | ConvertTo-Json -Depth 8
             $parameters.ContentType = 'application/json'
         }
-        if ($null -ne $Headers) { $parameters.Headers = $Headers }
+        $parameters.Headers = Merge-AuthorizationHeaders $Headers
         Invoke-WebRequest @parameters | Out-Null
         throw "Expected HTTP $ExpectedStatus from $Method $Uri, but the request succeeded."
     }
@@ -63,7 +68,7 @@ function Assert-True {
 
 function Remove-VersionedResource {
     param([Parameter(Mandatory)][string]$Uri, [Parameter(Mandatory)][string]$RowVersion)
-    $headers = @{ 'If-Match' = '"' + $RowVersion + '"' }
+    $headers = Merge-AuthorizationHeaders @{ 'If-Match' = '"' + $RowVersion + '"' }
     $response = Invoke-WebRequest -UseBasicParsing -Uri $Uri -Method DELETE -Headers $headers
     Assert-True ($response.StatusCode -eq 204) "DELETE $Uri did not return 204."
 }

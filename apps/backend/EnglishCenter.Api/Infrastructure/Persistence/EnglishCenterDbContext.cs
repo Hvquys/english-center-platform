@@ -13,6 +13,8 @@ public sealed class EnglishCenterDbContext(DbContextOptions<EnglishCenterDbConte
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<AppUser> AppUsers => Set<AppUser>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

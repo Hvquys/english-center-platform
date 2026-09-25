@@ -107,3 +107,30 @@ public sealed class Payment : AuditableEntity
     public string? Note { get; set; }
     public Enrollment Enrollment { get; set; } = null!;
 }
+
+public sealed class AppUser
+{
+    public long UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
+    public AppUserRole Role { get; set; }
+    public bool IsActive { get; set; } = true;
+    public long? StudentId { get; set; }
+    public long? TeacherId { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+    public Student? Student { get; set; }
+    public Teacher? Teacher { get; set; }
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+}
+
+public sealed class RefreshToken
+{
+    public long RefreshTokenId { get; set; }
+    public long UserId { get; set; }
+    public string TokenHash { get; set; } = string.Empty;
+    public DateTime ExpiresAtUtc { get; set; }
+    public DateTime? RevokedAtUtc { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public AppUser User { get; set; } = null!;
+}

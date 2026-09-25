@@ -1,10 +1,13 @@
 using EnglishCenter.Api.Api.Concurrency;
 using EnglishCenter.Api.Api.Paging;
+using EnglishCenter.Api.Modules.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnglishCenter.Api.Modules.Courses;
 
 [ApiController, Route("api/courses")]
+[Authorize]
 public sealed class CoursesController(ICourseService service) : ControllerBase
 {
     [HttpGet, ProducesResponseType<PagedResponse<CourseResponse>>(StatusCodes.Status200OK)]
@@ -21,6 +24,7 @@ public sealed class CoursesController(ICourseService service) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthorizationPolicies.StaffOperations)]
     [ProducesResponseType<CourseResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
@@ -32,6 +36,7 @@ public sealed class CoursesController(ICourseService service) : ControllerBase
     }
 
     [HttpPut("{courseId:long:min(1)}")]
+    [Authorize(Policy = AuthorizationPolicies.StaffOperations)]
     [ProducesResponseType<CourseResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -44,6 +49,7 @@ public sealed class CoursesController(ICourseService service) : ControllerBase
     }
 
     [HttpDelete("{courseId:long:min(1)}")]
+    [Authorize(Policy = AuthorizationPolicies.StaffOperations)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

@@ -2,10 +2,15 @@
 param(
     [Parameter()]
     [ValidatePattern('^https?://[^\s/]+(?::\d+)?$')]
-    [string]$BaseUrl = 'http://localhost:8080'
+    [string]$BaseUrl = 'http://localhost:8080',
+
+    [Parameter()]
+    [string]$AccessToken
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'auth-test-support.ps1')
+if ([string]::IsNullOrWhiteSpace($AccessToken)) { $AccessToken = Get-AdminAuthToken $BaseUrl }
 
 function Invoke-ExpectedHttpError {
     param(
@@ -24,7 +29,7 @@ function Invoke-ExpectedHttpError {
     )
 
     try {
-        $requestParameters = @{ UseBasicParsing = $true; Uri = $Uri; Method = $Method }
+        $requestParameters = @{ UseBasicParsing = $true; Uri = $Uri; Method = $Method; Headers = (Merge-AuthorizationHeaders) }
         if ($PSBoundParameters.ContainsKey('Body')) {
             $requestParameters.Body = $Body
             $requestParameters.ContentType = 'application/json'

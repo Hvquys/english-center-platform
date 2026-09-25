@@ -1,10 +1,13 @@
 using EnglishCenter.Api.Api.Concurrency;
 using EnglishCenter.Api.Api.Paging;
+using EnglishCenter.Api.Modules.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnglishCenter.Api.Modules.Enrollments;
 
 [ApiController, Route("api/enrollments")]
+[Authorize(Policy = AuthorizationPolicies.StaffOperations)]
 public sealed class EnrollmentsController(IEnrollmentService service) : ControllerBase
 {
     [HttpGet, ProducesResponseType<PagedResponse<EnrollmentResponse>>(StatusCodes.Status200OK)]

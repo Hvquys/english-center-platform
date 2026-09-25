@@ -6,6 +6,8 @@ public sealed class ResourceNotFoundException(string message) : ApplicationExcep
 
 public sealed class ResourceConflictException(string message) : ApplicationExceptionBase(message);
 
+public sealed class AuthenticationFailedException(string message) : ApplicationExceptionBase(message);
+
 public sealed class RequestValidationException(
     string message,
     IReadOnlyDictionary<string, string[]> errors) : ApplicationExceptionBase(message)

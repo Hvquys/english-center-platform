@@ -2,10 +2,15 @@
 param(
     [Parameter()]
     [ValidatePattern('^https?://[^\s/]+(?::\d+)?$')]
-    [string]$BaseUrl = 'http://localhost:8080'
+    [string]$BaseUrl = 'http://localhost:8080',
+
+    [Parameter()]
+    [string]$AccessToken
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'auth-test-support.ps1')
+if ([string]::IsNullOrWhiteSpace($AccessToken)) { $AccessToken = Get-AdminAuthToken $BaseUrl }
 
 function Invoke-JsonRequest {
     param(
@@ -24,6 +29,7 @@ function Invoke-JsonRequest {
         UseBasicParsing = $true
         Uri = $Uri
         Method = $Method
+        Headers = (Merge-AuthorizationHeaders)
     }
 
     if ($PSBoundParameters.ContainsKey('Body')) {
@@ -66,9 +72,7 @@ function Invoke-ExpectedProblem {
             $parameters.ContentType = 'application/json'
         }
 
-        if ($null -ne $Headers) {
-            $parameters.Headers = $Headers
-        }
+        $parameters.Headers = Merge-AuthorizationHeaders $Headers
 
         Invoke-WebRequest @parameters | Out-Null
         throw "Expected HTTP $ExpectedStatus from $Method $Uri, but the request succeeded."
@@ -153,7 +157,7 @@ $staleStudentUpdate.fullName = 'Stale Student Update'
 Invoke-ExpectedProblem -Uri "$BaseUrl/api/students/$($student.studentId)" -Method PUT -ExpectedStatus 409 -Body $staleStudentUpdate | Out-Null
 
 Invoke-ExpectedProblem -Uri "$BaseUrl/api/students/$($student.studentId)" -Method DELETE -ExpectedStatus 400 | Out-Null
-$studentDeleteHeaders = @{ 'If-Match' = '"' + $updatedStudent.rowVersion + '"' }
+$studentDeleteHeaders = Merge-AuthorizationHeaders @{ 'If-Match' = '"' + $updatedStudent.rowVersion + '"' }
 $studentDelete = Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/api/students/$($student.studentId)" -Method DELETE -Headers $studentDeleteHeaders
 Assert-True ($studentDelete.StatusCode -eq 204) 'Student DELETE did not return 204.'
 Invoke-ExpectedProblem -Uri "$BaseUrl/api/students/$($student.studentId)" -Method GET -ExpectedStatus 404 | Out-Null
@@ -190,7 +194,7 @@ Assert-True ($updatedTeacher.rowVersion -ne $teacher.rowVersion) 'Teacher PUT di
 $filteredTeachers = Invoke-JsonRequest -Uri "$BaseUrl/api/teachers?page=1&pageSize=5&search=$teacherCode&status=ON_LEAVE" -Method GET
 Assert-True ($filteredTeachers.totalCount -eq 1) 'Teacher status filter did not return the updated record.'
 
-$teacherDeleteHeaders = @{ 'If-Match' = '"' + $updatedTeacher.rowVersion + '"' }
+$teacherDeleteHeaders = Merge-AuthorizationHeaders @{ 'If-Match' = '"' + $updatedTeacher.rowVersion + '"' }
 $teacherDelete = Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/api/teachers/$($teacher.teacherId)" -Method DELETE -Headers $teacherDeleteHeaders
 Assert-True ($teacherDelete.StatusCode -eq 204) 'Teacher DELETE did not return 204.'
 Invoke-ExpectedProblem -Uri "$BaseUrl/api/teachers/$($teacher.teacherId)" -Method GET -ExpectedStatus 404 | Out-Null
