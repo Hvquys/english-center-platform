@@ -22,3 +22,18 @@ Accept: application/json
 
 GET {{EnglishCenter.Api_HostAddress}}/api/teachers?page=1&pageSize=20
 Accept: application/json
+
+###
+
+GET {{EnglishCenter.Api_HostAddress}}/api/courses?page=1&pageSize=20
+Accept: application/json
+
+###
+
+GET {{EnglishCenter.Api_HostAddress}}/api/classes?page=1&pageSize=20
+Accept: application/json
+
+###
+
+GET {{EnglishCenter.Api_HostAddress}}/api/enrollments?page=1&pageSize=20
+Accept: application/json

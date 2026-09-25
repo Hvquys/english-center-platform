@@ -1,6 +1,9 @@
 using EnglishCenter.Api.Api;
 using EnglishCenter.Api.Api.ErrorHandling;
 using EnglishCenter.Api.Infrastructure.Persistence;
+using EnglishCenter.Api.Modules.Classes;
+using EnglishCenter.Api.Modules.Courses;
+using EnglishCenter.Api.Modules.Enrollments;
 using EnglishCenter.Api.Modules.Health;
 using EnglishCenter.Api.Modules.Students;
 using EnglishCenter.Api.Modules.Teachers;
@@ -28,6 +31,9 @@ builder.Services.AddDbContext<EnglishCenterDbContext>(options =>
     options.UseSqlServer(sqlServerConnectionString));
 
 builder.Services.AddHealthModule();
+builder.Services.AddCoursesModule();
+builder.Services.AddClassesModule();
+builder.Services.AddEnrollmentsModule();
 builder.Services.AddStudentsModule();
 builder.Services.AddTeachersModule();
 

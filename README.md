@@ -72,6 +72,7 @@ Run the repeatable acceptance check:
 The script verifies API and SQL Server health, OpenAPI paths, `404`, `405`, and
 validation `400` Problem Details responses, the Students module boundary, and
 the browser CORS preflight. Every check must report `PASS`.
+
 ## People API verification
 
 The Students and Teachers modules provide paged search, detail, create, update,
@@ -89,6 +90,24 @@ Run the end-to-end CRUD acceptance check against the Docker API:
 The script creates isolated test records, verifies paging and filters, updates
 them, confirms stale-write protection, soft-deletes them, proves the deleted
 codes remain reserved, and checks the OpenAPI operations.
+
+## Learning API verification
+
+The Courses, Classes, and Enrollments modules implement the core learning
+workflow. Courses start as `DRAFT`; classes start as `PLANNED`; enrollment is
+allowed only when the course is active, the class is open, the student and
+teacher are active, and capacity remains available. Status transitions and
+row-version checks prevent invalid or stale updates.
+
+Run the end-to-end learning workflow check:
+
+```powershell
+.\scripts\api\verify-learning-api.ps1
+```
+
+The script verifies course activation, class opening, tuition defaults,
+duplicate enrollment and capacity conflicts, lifecycle transitions, search and
+filters, soft-delete cleanup, and OpenAPI coverage.
 
 ## Project documentation
 
