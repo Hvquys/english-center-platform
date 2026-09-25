@@ -5,16 +5,48 @@ business application, a data platform, observability, and an AI assistant.
 
 ## Current milestone
 
-M1 — Project Setup & Infrastructure
+M2 — Backend ASP.NET Core Web API + EF Core + SQL Server
 
 The initial application consists of:
 
 - React and TypeScript frontend in `apps/web`
 - ASP.NET Core Web API in `apps/backend/EnglishCenter.Api`
-- SQL Server OLTP as the future operational source of truth
+- SQL Server OLTP as the operational source of truth
 
 The data, observability, and AI components will be introduced in later
 milestones according to the project roadmap.
+
+## EF Core database workflow
+
+The backend maps the seven initial OLTP entities with EF Core. Migrations are
+managed by the repository-local `dotnet-ef` tool, so every developer uses the
+same tool version.
+
+Restore the tool and compile the backend:
+
+```powershell
+dotnet tool restore
+dotnet build .\EnglishCenterPlatform.slnx
+```
+
+Apply the migration to an isolated local verification database. The script
+reads the SQL Server password from the ignored `infrastructure/.env` file,
+keeps it in the current process only, and never prints or commits it:
+
+```powershell
+.\scripts\database\update-ef-database.ps1 -DatabaseName EnglishCenterEfTest
+```
+
+Verify schema objects, migration history, deterministic seed data, audit
+timestamps, and row-version behavior:
+
+```powershell
+.\scripts\database\verify-ef-database.ps1 -DatabaseName EnglishCenterEfTest
+```
+
+`EnglishCenterEfTest` is intentionally separate from the operational
+`EnglishCenter` database created in TASK-003. This proves that the migration
+can build a clean database without overwriting local operational data.
 
 ## Project documentation
 
