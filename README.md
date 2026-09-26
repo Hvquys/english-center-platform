@@ -5,7 +5,7 @@ business application, a data platform, observability, and an AI assistant.
 
 ## Current milestone
 
-M2 — Backend ASP.NET Core Web API + EF Core + SQL Server
+M4 — Frontend React + TypeScript
 
 The initial application consists of:
 
@@ -15,6 +15,41 @@ The initial application consists of:
 
 The data, observability, and AI components will be introduced in later
 milestones according to the project roadmap.
+
+## Frontend foundation and login
+
+The React application now provides routing, a protected application shell,
+typed API contracts, login form validation, JWT session handling, refresh-token
+rotation, logout, and a responsive dashboard foundation. Browser requests use
+the relative `/api` path. Vite proxies it to `http://localhost:8080` during
+local development, while Nginx proxies it to the `api` Compose service in the
+container. Override `VITE_API_BASE_URL` only when the API uses another origin.
+
+The current backend returns tokens in JSON, so the web client stores the
+session in `sessionStorage`: it survives a page refresh in the same tab and is
+removed when that tab closes. Passwords are never stored. A production release
+should prefer an HttpOnly, Secure, SameSite refresh-token cookie when the API
+contract is extended to support it.
+
+Run the frontend locally:
+
+```powershell
+Set-Location .\apps\web
+Copy-Item .env.example .env.local
+npm.cmd install
+npm.cmd run dev
+```
+
+Rebuild the Compose web service and run the repeatable acceptance check. The
+script verifies SPA fallback, the Nginx API proxy, invalid-login Problem
+Details, admin login, and `/api/auth/me` without printing credentials or
+tokens:
+
+```powershell
+docker compose --env-file .\infrastructure\.env `
+  -f .\infrastructure\docker-compose.yml up -d --build web
+.\scripts\web\verify-web-foundation.ps1
+```
 
 ## EF Core database workflow
 
