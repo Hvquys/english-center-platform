@@ -126,6 +126,29 @@ docker compose --env-file .\infrastructure\.env `
 The script proves Redis health, read-through caching, TTL limits, update and
 delete invalidation, fresh values after a version change, and test-data cleanup.
 
+## Redis API rate limiting
+
+Login, refresh-token, and notification publishing endpoints use an atomic
+Redis fixed-window counter. The default Compose limits are 20 login attempts,
+10 refresh attempts, and 30 notification requests per 60 seconds. Partitions
+are stored as SHA-256 hashes, so Redis keys do not expose an email address,
+client address, user id, token, or request body. Responses include limit,
+remaining, and reset headers; rejected requests use HTTP 429 Problem Details
+with `Retry-After`. If Redis becomes temporarily unavailable, the API records
+a warning and lets the request continue so an infrastructure failure does not
+lock every user out.
+
+From the repository root, verify the complete behavior with:
+
+```powershell
+.\scripts\cache\verify-redis-rate-limiting.ps1
+```
+
+The check creates a unique login partition, proves that request 21 is blocked,
+confirms the Redis TTL and hashed key, shortens only that test key to prove the
+next window starts cleanly, verifies the OpenAPI 429 contracts, and removes the
+test key.
+
 ## EF Core database workflow
 
 The backend maps the seven initial OLTP entities with EF Core. Migrations are

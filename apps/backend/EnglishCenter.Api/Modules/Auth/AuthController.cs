@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using EnglishCenter.Api.Api.ErrorHandling;
+using EnglishCenter.Api.Modules.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,15 +11,19 @@ namespace EnglishCenter.Api.Modules.Auth;
 public sealed class AuthController(IAuthService authService) : ControllerBase
 {
     [AllowAnonymous, HttpPost("login")]
+    [RedisRateLimit(RedisRateLimitPolicy.Login)]
     [ProducesResponseType<AuthTokenResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<AuthTokenResponse>> Login(LoginRequest request, CancellationToken ct) =>
         Ok(await authService.LoginAsync(request, ct));
 
     [AllowAnonymous, HttpPost("refresh")]
+    [RedisRateLimit(RedisRateLimitPolicy.Refresh)]
     [ProducesResponseType<AuthTokenResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<AuthTokenResponse>> Refresh(RefreshRequest request, CancellationToken ct) =>
         Ok(await authService.RefreshAsync(request, ct));
 

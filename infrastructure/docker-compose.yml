@@ -52,6 +52,13 @@ services:
       Cache__Redis__InstanceName: "english-center:"
       Cache__Redis__DefaultTtlSeconds: "300"
       Cache__Redis__CourseListTtlSeconds: "60"
+      RateLimiting__Redis__Enabled: "true"
+      RateLimiting__Redis__Login__PermitLimit: "20"
+      RateLimiting__Redis__Login__WindowSeconds: "60"
+      RateLimiting__Redis__Refresh__PermitLimit: "10"
+      RateLimiting__Redis__Refresh__WindowSeconds: "60"
+      RateLimiting__Redis__Notifications__PermitLimit: "30"
+      RateLimiting__Redis__Notifications__WindowSeconds: "60"
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:

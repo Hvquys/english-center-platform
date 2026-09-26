@@ -10,6 +10,7 @@ using EnglishCenter.Api.Modules.Enrollments;
 using EnglishCenter.Api.Modules.Health;
 using EnglishCenter.Api.Modules.Messaging;
 using EnglishCenter.Api.Modules.Payments;
+using EnglishCenter.Api.Modules.RateLimiting;
 using EnglishCenter.Api.Modules.Students;
 using EnglishCenter.Api.Modules.Teachers;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,7 @@ builder.Services.AddHealthModule();
 builder.Services.AddCacheModule(builder.Configuration);
 builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddMessagingModule(builder.Configuration);
+builder.Services.AddRedisRateLimitingModule(builder.Configuration);
 builder.Services.AddAttendanceModule();
 builder.Services.AddCoursesModule();
 builder.Services.AddClassesModule();
@@ -69,8 +71,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
 app.UseCors(frontendCorsPolicy);
 app.UseAuthentication();
+app.UseRedisRateLimiting();
 app.UseAuthorization();
 
 app.MapControllers();

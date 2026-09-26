@@ -1,5 +1,6 @@
 using EnglishCenter.Api.Api.ErrorHandling;
 using EnglishCenter.Api.Modules.Auth;
+using EnglishCenter.Api.Modules.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +12,12 @@ namespace EnglishCenter.Api.Modules.Messaging;
 public sealed class NotificationsController(IIntegrationEventPublisher publisher) : ControllerBase
 {
     [HttpPost]
+    [RedisRateLimit(RedisRateLimitPolicy.Notifications)]
     [ProducesResponseType<NotificationAcceptedResponse>(StatusCodes.Status202Accepted)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public async Task<ActionResult<NotificationAcceptedResponse>> Publish(
         PublishNotificationRequest request,
