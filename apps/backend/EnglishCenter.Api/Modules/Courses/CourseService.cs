@@ -4,6 +4,7 @@ using EnglishCenter.Api.Api.Paging;
 using EnglishCenter.Api.Domain.Entities;
 using EnglishCenter.Api.Domain.Enums;
 using EnglishCenter.Api.Infrastructure.Persistence;
+using EnglishCenter.Api.Modules.Caching;
 using Microsoft.EntityFrameworkCore;
 
 namespace EnglishCenter.Api.Modules.Courses;
@@ -17,10 +18,15 @@ public interface ICourseService
     Task DeleteAsync(long courseId, string? rowVersion, CancellationToken cancellationToken);
 }
 
-internal sealed class CourseService(EnglishCenterDbContext dbContext) : ICourseService
+internal sealed class CourseService(
+    EnglishCenterDbContext dbContext,
+    ICourseCache courseCache) : ICourseService
 {
     public async Task<PagedResponse<CourseResponse>> GetAllAsync(CourseListQuery query, CancellationToken cancellationToken)
     {
+        var cached = await courseCache.GetListAsync(query, cancellationToken);
+        if (cached.Found && cached.Value is not null) return cached.Value;
+
         var courses = dbContext.Courses.AsNoTracking();
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -43,13 +49,22 @@ internal sealed class CourseService(EnglishCenterDbContext dbContext) : ICourseS
             .Take(query.PageSize)
             .ToArrayAsync(cancellationToken);
 
-        return new PagedResponse<CourseResponse>(
+        var response = new PagedResponse<CourseResponse>(
             pageItems.Select(ToResponse).ToArray(), query.Page, query.PageSize, totalCount,
             totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)query.PageSize));
+        await courseCache.SetListAsync(query, response, cancellationToken);
+        return response;
     }
 
-    public async Task<CourseResponse> GetByIdAsync(long courseId, CancellationToken cancellationToken) =>
-        ToResponse(await FindAsync(courseId, false, cancellationToken));
+    public async Task<CourseResponse> GetByIdAsync(long courseId, CancellationToken cancellationToken)
+    {
+        var cached = await courseCache.GetByIdAsync(courseId, cancellationToken);
+        if (cached.Found && cached.Value is not null) return cached.Value;
+
+        var response = ToResponse(await FindAsync(courseId, false, cancellationToken));
+        await courseCache.SetByIdAsync(response, cancellationToken);
+        return response;
+    }
 
     public async Task<CourseResponse> CreateAsync(CreateCourseRequest request, CancellationToken cancellationToken)
     {
@@ -67,6 +82,7 @@ internal sealed class CourseService(EnglishCenterDbContext dbContext) : ICourseS
         };
         dbContext.Courses.Add(course);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await courseCache.InvalidateListsAsync(cancellationToken);
         return ToResponse(course);
     }
 
@@ -93,6 +109,7 @@ internal sealed class CourseService(EnglishCenterDbContext dbContext) : ICourseS
         course.StandardTuition = request.StandardTuition!.Value;
         course.Status = request.Status!.Value;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await courseCache.InvalidateAsync(courseId, cancellationToken);
         return ToResponse(course);
     }
 
@@ -107,6 +124,7 @@ internal sealed class CourseService(EnglishCenterDbContext dbContext) : ICourseS
         dbContext.Entry(course).Property(item => item.RowVersion).OriginalValue = RowVersionCodec.Decode(rowVersion, "If-Match");
         course.IsDeleted = true;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await courseCache.InvalidateAsync(courseId, cancellationToken);
     }
 
     private async Task<Course> FindAsync(long id, bool tracking, CancellationToken cancellationToken)

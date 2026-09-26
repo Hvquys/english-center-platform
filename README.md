@@ -5,7 +5,7 @@ business application, a data platform, observability, and an AI assistant.
 
 ## Current milestone
 
-M5 — Application Integration with RabbitMQ
+M5 — Application Integration with RabbitMQ and Redis
 
 The initial application consists of:
 
@@ -13,6 +13,7 @@ The initial application consists of:
 - ASP.NET Core Web API in `apps/backend/EnglishCenter.Api`
 - SQL Server OLTP as the operational source of truth
 - RabbitMQ for durable notification integration events
+- Redis for short-lived application query caching
 
 The data, observability, and AI components will be introduced in later
 milestones according to the project roadmap.
@@ -84,6 +85,33 @@ The script verifies broker health, exchanges, queues, bindings, `401`, invalid
 request `400`, authorized `202`, publisher-confirmed routing, dead-letter
 routing, and final queue cleanup. It reads local credentials without printing
 passwords or tokens.
+
+## Redis course cache
+
+Course detail and list queries now use the cache-aside pattern. The API first
+checks Redis, reads SQL Server on a cache miss, and then stores the response for
+a limited time. Detail entries live for up to 300 seconds; list entries live for
+up to 60 seconds. SQL Server remains the OLTP source of truth.
+
+Creating a course rotates the list-cache version. Updating or deleting a course
+also removes its detail entry and rotates that version. Old list entries become
+unreachable immediately and expire naturally, so the API does not run broad
+key-deletion scans. If a normal cache read, write, or invalidation fails, the
+request continues against SQL Server and records a warning. Redis itself is
+still reported separately by the health endpoint.
+
+Redis is part of the core Compose runtime. Its password comes from the ignored
+`infrastructure/.env` file. Rebuild the API and run the repeatable acceptance
+check without printing the password or access token:
+
+```powershell
+docker compose --env-file .\infrastructure\.env `
+  -f .\infrastructure\docker-compose.yml up -d --build api
+.\scripts\cache\verify-redis-cache.ps1
+```
+
+The script proves Redis health, read-through caching, TTL limits, update and
+delete invalidation, fresh values after a version change, and test-data cleanup.
 
 ## EF Core database workflow
 
@@ -272,14 +300,11 @@ After every service reports healthy:
 - Frontend: <http://localhost:5173>
 - API health: <http://localhost:8080/api/health>
 
-RabbitMQ is now part of the core Compose runtime because the M5 API publishes
-notification events through it. Redis remains under the `integration` profile
-until TASK-016. The PostgreSQL analytical DWH and MinIO RAW/Bronze storage are
-defined for M6 under the `data` profile.
+RabbitMQ and Redis are now part of the core Compose runtime for M5. The
+PostgreSQL analytical DWH and MinIO RAW/Bronze storage are defined for M6 under
+the `data` profile.
 
 ```powershell
-docker compose --env-file .\infrastructure\.env `
-  -f .\infrastructure\docker-compose.yml --profile integration up -d
 docker compose --env-file .\infrastructure\.env `
   -f .\infrastructure\docker-compose.yml --profile data up -d
 ```

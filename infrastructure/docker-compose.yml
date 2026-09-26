@@ -42,12 +42,19 @@ services:
       Messaging__RabbitMq__UserName: "${RABBITMQ_USER:-ecp_app}"
       Messaging__RabbitMq__Password: "${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in infrastructure/.env}"
       Messaging__RabbitMq__ClientProvidedName: english-center-api
+      Cache__Redis__Enabled: "true"
+      Cache__Redis__ConnectionString: "redis:6379,password=${REDIS_PASSWORD:?Set REDIS_PASSWORD in infrastructure/.env},abortConnect=false,connectTimeout=5000,syncTimeout=5000"
+      Cache__Redis__InstanceName: "english-center:"
+      Cache__Redis__DefaultTtlSeconds: "300"
+      Cache__Redis__CourseListTtlSeconds: "60"
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: [CMD, curl, --fail, --silent, http://localhost:8080/api/health]
@@ -78,8 +85,9 @@ services:
 
   redis:
     image: redis:8.2-alpine
-    profiles: [integration]
     restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD:?Set REDIS_PASSWORD in infrastructure/.env}"
     command:
       - redis-server
       - --appendonly
@@ -91,12 +99,7 @@ services:
     volumes:
       - redis-data:/data
     healthcheck:
-      test:
-        - CMD
-        - redis-cli
-        - -a
-        - "${REDIS_PASSWORD}"
-        - ping
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG']
       interval: 10s
       timeout: 5s
       retries: 6

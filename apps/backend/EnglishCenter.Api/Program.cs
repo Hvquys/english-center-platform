@@ -3,6 +3,7 @@ using EnglishCenter.Api.Api.ErrorHandling;
 using EnglishCenter.Api.Infrastructure.Persistence;
 using EnglishCenter.Api.Modules.Attendance;
 using EnglishCenter.Api.Modules.Auth;
+using EnglishCenter.Api.Modules.Caching;
 using EnglishCenter.Api.Modules.Classes;
 using EnglishCenter.Api.Modules.Courses;
 using EnglishCenter.Api.Modules.Enrollments;
@@ -35,6 +36,7 @@ builder.Services.AddDbContext<EnglishCenterDbContext>(options =>
     options.UseSqlServer(sqlServerConnectionString));
 
 builder.Services.AddHealthModule();
+builder.Services.AddCacheModule(builder.Configuration);
 builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddMessagingModule(builder.Configuration);
 builder.Services.AddAttendanceModule();
