@@ -438,3 +438,44 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
             .HasDatabaseName("IX_RefreshTokens_UserExpiry");
     }
 }
+
+internal sealed class NotificationProcessingRecordConfiguration
+    : IEntityTypeConfiguration<NotificationProcessingRecord>
+{
+    public void Configure(EntityTypeBuilder<NotificationProcessingRecord> builder)
+    {
+        builder.ToTable("NotificationProcessingRecords", table =>
+            table.HasCheckConstraint(
+                "CK_NotificationProcessingRecords_Channel",
+                "[channel] IN ('EMAIL', 'IN_APP')"));
+
+        builder.HasKey(entity => entity.EventId)
+            .HasName("PK_NotificationProcessingRecords");
+        builder.Property(entity => entity.EventId).HasColumnName("event_id");
+        builder.Property(entity => entity.OccurredAtUtc)
+            .HasColumnName("occurred_at_utc")
+            .HasColumnType("datetimeoffset(3)");
+        builder.Property(entity => entity.RecipientUserId).HasColumnName("recipient_user_id");
+        builder.Property(entity => entity.Channel)
+            .HasColumnName("channel")
+            .HasMaxLength(20)
+            .IsUnicode(false);
+        builder.Property(entity => entity.TemplateKey)
+            .HasColumnName("template_key")
+            .HasMaxLength(100)
+            .IsUnicode(false);
+        builder.Property(entity => entity.ParametersJson)
+            .HasColumnName("parameters_json")
+            .HasColumnType("nvarchar(max)");
+        builder.Property(entity => entity.CorrelationId)
+            .HasColumnName("correlation_id")
+            .HasMaxLength(100);
+        builder.Property(entity => entity.ProcessedAtUtc)
+            .HasColumnName("processed_at_utc")
+            .HasColumnType("datetime2(3)")
+            .HasDefaultValueSql("SYSUTCDATETIME()");
+
+        builder.HasIndex(entity => entity.ProcessedAtUtc)
+            .HasDatabaseName("IX_NotificationProcessingRecords_ProcessedAtUtc");
+    }
+}

@@ -9,6 +9,9 @@ public static class NotificationTopology
     public const string DispatchQueue = "english-center.notifications.dispatch";
     public const string DispatchBinding = "notification.*.requested";
 
+    public const string RetryExchange = "english-center.notifications.retry";
+    public const string RetryQueue = "english-center.notifications.retry";
+
     public const string DeadLetterExchange = "english-center.notifications.dlx";
     public const string DeadLetterQueue = "english-center.notifications.dead-letter";
     public const string DeadLetterRoutingKey = "notification.dead-letter";

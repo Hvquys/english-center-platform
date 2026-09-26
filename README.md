@@ -60,6 +60,8 @@ The API now owns a durable RabbitMQ topology for notification requests:
 - topic exchange `english-center.notifications`
 - durable dispatch queue `english-center.notifications.dispatch`
 - binding `notification.*.requested`
+- direct retry exchange and durable retry queue `english-center.notifications.retry`
+- delayed retry that returns the original routing key to the main exchange
 - direct dead-letter exchange `english-center.notifications.dlx`
 - durable dead-letter queue `english-center.notifications.dead-letter`
 - dead-letter routing key `notification.dead-letter`
@@ -67,8 +69,17 @@ The API now owns a durable RabbitMQ topology for notification requests:
 `POST /api/notifications` requires an `ADMIN` or `STAFF` bearer token. It
 accepts the request only after RabbitMQ confirms the persistent message. Email
 requests use `notification.email.requested`; in-app requests use
-`notification.in-app.requested`. TASK-015 will add the worker that consumes the
-dispatch queue, retries failures, and makes processing idempotent.
+`notification.in-app.requested`.
+
+The notification worker consumes one message at a time with manual
+acknowledgement. A valid event is written to
+`NotificationProcessingRecords` before RabbitMQ is acknowledged. The event id
+is the table primary key, so a redelivery or duplicate publish is recorded only
+once, including after an API restart. A failure waits in the retry queue before
+returning to the dispatch queue. After three failed retries it moves to the
+dead-letter queue for inspection. The current worker records the durable
+delivery boundary; a later email or in-app provider must use the same event id
+as its idempotency key.
 
 RabbitMQ is enabled in Docker Compose and its username/password come from the
 ignored `infrastructure/.env` file. The committed settings contain no real
@@ -79,11 +90,13 @@ check:
 docker compose --env-file .\infrastructure\.env `
   -f .\infrastructure\docker-compose.yml up -d --build
 .\scripts\messaging\verify-rabbitmq-topology.ps1
+.\scripts\messaging\verify-notification-worker.ps1
 ```
 
-The script verifies broker health, exchanges, queues, bindings, `401`, invalid
-request `400`, authorized `202`, publisher-confirmed routing, dead-letter
-routing, and final queue cleanup. It reads local credentials without printing
+The checks verify broker health, exchanges, queues, bindings, `401`, invalid
+request `400`, authorized `202`, the live worker, persistent processing,
+duplicate suppression, three delayed retries, final dead-letter routing, and
+targeted test-data cleanup. They read local credentials without printing
 passwords or tokens.
 
 ## Redis course cache

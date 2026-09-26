@@ -22,6 +22,11 @@ public static class MessagingModule
         services.AddSingleton<RabbitMqConnection>();
         services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
+        services.AddScoped<NotificationMessageProcessor>();
+        if (options.WorkerEnabled)
+        {
+            services.AddHostedService<NotificationWorker>();
+        }
         services.AddHealthChecks().AddCheck<RabbitMqHealthCheck>("rabbitmq");
         return services;
     }
@@ -39,12 +44,16 @@ public static class MessagingModule
                 ["RabbitMQ host, virtual host, username and password are required when messaging is enabled."]);
         }
 
-        if (options.Port is < 1 or > 65535 || options.PublishTimeoutSeconds is < 1 or > 60)
+        if (options.Port is < 1 or > 65535 ||
+            options.PublishTimeoutSeconds is < 1 or > 60 ||
+            options.RetryDelayMilliseconds is < 100 or > 600000 ||
+            options.MaxRetryAttempts is < 0 or > 10 ||
+            options.PrefetchCount is < 1 or > 100)
         {
             throw new OptionsValidationException(
                 RabbitMqOptions.SectionName,
                 typeof(RabbitMqOptions),
-                ["RabbitMQ port or publish timeout is outside the supported range."]);
+                ["RabbitMQ port, publish timeout, retry delay, retry attempts or prefetch count is outside the supported range."]);
         }
     }
 }

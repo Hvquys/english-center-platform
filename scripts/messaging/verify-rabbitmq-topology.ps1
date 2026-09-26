@@ -13,6 +13,8 @@ $ErrorActionPreference = 'Stop'
 $exchangeName = 'english-center.notifications'
 $dispatchQueue = 'english-center.notifications.dispatch'
 $dispatchBinding = 'notification.*.requested'
+$retryExchange = 'english-center.notifications.retry'
+$retryQueue = 'english-center.notifications.retry'
 $deadLetterExchange = 'english-center.notifications.dlx'
 $deadLetterQueue = 'english-center.notifications.dead-letter'
 $deadLetterRoutingKey = 'notification.dead-letter'
@@ -101,6 +103,7 @@ function Get-OneMessage {
 
 $rabbitUser = Get-LocalEnvironmentValue 'RABBITMQ_USER'
 $rabbitPassword = Get-LocalEnvironmentValue 'RABBITMQ_PASSWORD'
+$sqlPassword = Get-LocalEnvironmentValue 'SQLSERVER_SA_PASSWORD'
 $basicBytes = [System.Text.Encoding]::UTF8.GetBytes("${rabbitUser}:${rabbitPassword}")
 $script:RabbitHeaders = @{ Authorization = "Basic $([Convert]::ToBase64String($basicBytes))" }
 
@@ -123,26 +126,39 @@ Assert-True ($null -ne $openApi.paths.'/api/notifications'.post) 'OpenAPI does n
 
 $encodedExchange = ConvertTo-PathSegment $exchangeName
 $encodedDeadLetterExchange = ConvertTo-PathSegment $deadLetterExchange
+$encodedRetryExchange = ConvertTo-PathSegment $retryExchange
 $encodedDispatchQueue = ConvertTo-PathSegment $dispatchQueue
+$encodedRetryQueue = ConvertTo-PathSegment $retryQueue
 $encodedDeadLetterQueue = ConvertTo-PathSegment $deadLetterQueue
 
 $exchange = Invoke-RabbitManagement -Path "/api/exchanges/%2F/$encodedExchange"
 $deadExchange = Invoke-RabbitManagement -Path "/api/exchanges/%2F/$encodedDeadLetterExchange"
+$retryExchangeDetails = Invoke-RabbitManagement -Path "/api/exchanges/%2F/$encodedRetryExchange"
 $dispatch = Get-Queue $dispatchQueue
+$retry = Get-Queue $retryQueue
 $deadLetter = Get-Queue $deadLetterQueue
 Assert-True ($exchange.type -eq 'topic' -and $exchange.durable) 'Notification exchange is not a durable topic exchange.'
 Assert-True ($deadExchange.type -eq 'direct' -and $deadExchange.durable) 'Dead-letter exchange is not a durable direct exchange.'
+Assert-True ($retryExchangeDetails.type -eq 'direct' -and $retryExchangeDetails.durable) 'Retry exchange is not a durable direct exchange.'
 Assert-True ($dispatch.durable -and -not $dispatch.auto_delete) 'Dispatch queue is not durable.'
+Assert-True ($retry.durable -and -not $retry.auto_delete) 'Retry queue is not durable.'
 Assert-True ($deadLetter.durable -and -not $deadLetter.auto_delete) 'Dead-letter queue is not durable.'
 Assert-True ($dispatch.arguments.'x-dead-letter-exchange' -eq $deadLetterExchange) 'Dispatch queue does not target the dead-letter exchange.'
 Assert-True ($dispatch.arguments.'x-dead-letter-routing-key' -eq $deadLetterRoutingKey) 'Dispatch queue does not use the expected dead-letter routing key.'
+Assert-True ($retry.arguments.'x-dead-letter-exchange' -eq $exchangeName) 'Retry queue does not route expired messages back to the main exchange.'
+Assert-True ($retry.arguments.'x-message-ttl' -ge 100) 'Retry queue does not have a retry delay.'
+Assert-True ($dispatch.consumers -ge 1) 'Notification worker is not consuming the dispatch queue.'
 
 $dispatchBindings = Invoke-RabbitManagement -Path "/api/bindings/%2F/e/$encodedExchange/q/$encodedDispatchQueue"
 $deadBindings = Invoke-RabbitManagement -Path "/api/bindings/%2F/e/$encodedDeadLetterExchange/q/$encodedDeadLetterQueue"
+$retryBindings = Invoke-RabbitManagement -Path "/api/bindings/%2F/e/$encodedRetryExchange/q/$encodedRetryQueue"
 Assert-True (@($dispatchBindings | Where-Object routing_key -eq $dispatchBinding).Count -eq 1) 'Dispatch binding is missing.'
 Assert-True (@($deadBindings | Where-Object routing_key -eq $deadLetterRoutingKey).Count -eq 1) 'Dead-letter binding is missing.'
+Assert-True (@($retryBindings | Where-Object routing_key -eq 'notification.email.requested').Count -eq 1) 'Email retry binding is missing.'
+Assert-True (@($retryBindings | Where-Object routing_key -eq 'notification.in-app.requested').Count -eq 1) 'In-app retry binding is missing.'
 
 Assert-True ($dispatch.messages -eq 0) 'Dispatch queue must be empty before the acceptance test.'
+Assert-True ($retry.messages -eq 0) 'Retry queue must be empty before the acceptance test.'
 Assert-True ($deadLetter.messages -eq 0) 'Dead-letter queue must be empty before the acceptance test.'
 
 $testRequest = @{
@@ -172,31 +188,28 @@ Assert-True ($acceptedResponse.StatusCode -eq 202) 'Notification API did not ret
 $accepted = $acceptedResponse.Content | ConvertFrom-Json
 Assert-True ($accepted.routingKey -eq 'notification.email.requested') 'Notification API returned the wrong routing key.'
 
-$dispatchMessages = @()
-for ($attempt = 0; $attempt -lt 10 -and $dispatchMessages.Count -eq 0; $attempt++) {
+for ($attempt = 0; $attempt -lt 20; $attempt++) {
     Start-Sleep -Milliseconds 200
-    $dispatchMessages = Get-OneMessage -QueueName $dispatchQueue -AckMode 'reject_requeue_false'
+    $dispatch = Get-Queue $dispatchQueue
+    $retry = Get-Queue $retryQueue
+    if ($dispatch.messages -eq 0 -and $retry.messages -eq 0) { break }
 }
-Assert-True ($dispatchMessages.Count -eq 1) 'Published notification did not reach the dispatch queue.'
-$published = $dispatchMessages[0]
-$publishedPayload = $published.payload | ConvertFrom-Json
-Assert-True ($published.routing_key -eq 'notification.email.requested') 'Published notification has the wrong routing key.'
-Assert-True ($published.properties.delivery_mode -eq 2) 'Published notification is not persistent.'
-Assert-True ($publishedPayload.eventId -eq $accepted.eventId) 'Published event id does not match the accepted response.'
-Assert-True ($publishedPayload.recipientUserId -eq 900014) 'Published event has the wrong synthetic recipient id.'
-
-$deadMessages = @()
-for ($attempt = 0; $attempt -lt 10 -and $deadMessages.Count -eq 0; $attempt++) {
-    Start-Sleep -Milliseconds 200
-    $deadMessages = Get-OneMessage -QueueName $deadLetterQueue -AckMode 'ack_requeue_false'
-}
-Assert-True ($deadMessages.Count -eq 1) 'Rejected notification did not reach the dead-letter queue.'
-$deadPayload = $deadMessages[0].payload | ConvertFrom-Json
-Assert-True ($deadPayload.eventId -eq $accepted.eventId) 'Dead-lettered event id does not match the published event.'
 
 $dispatchAfter = Get-Queue $dispatchQueue
 $deadLetterAfter = Get-Queue $deadLetterQueue
-Assert-True ($dispatchAfter.messages -eq 0 -and $deadLetterAfter.messages -eq 0) 'Acceptance queues were not clean after verification.'
+$retryAfter = Get-Queue $retryQueue
+Assert-True ($dispatchAfter.messages -eq 0 -and $retryAfter.messages -eq 0 -and $deadLetterAfter.messages -eq 0) 'Acceptance queues were not clean after verification.'
+
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+$environmentFile = Join-Path $repositoryRoot 'infrastructure\.env'
+$composeFile = Join-Path $repositoryRoot 'infrastructure\docker-compose.yml'
+$sqlContainer = (& docker compose --env-file $environmentFile -f $composeFile ps -q sqlserver).Trim()
+Assert-True (-not [string]::IsNullOrWhiteSpace($sqlContainer)) 'SQL Server Compose container is not running.'
+$sqlPasswordArgument = "SQLCMDPASSWORD=$sqlPassword"
+$cleanupQuery = "DELETE FROM dbo.NotificationProcessingRecords WHERE event_id = '$($accepted.eventId)';"
+& docker exec --env $sqlPasswordArgument $sqlContainer /opt/mssql-tools18/bin/sqlcmd `
+    -S localhost -U sa -C -d EnglishCenter -b -Q $cleanupQuery -o /dev/null
+Assert-True ($LASTEXITCODE -eq 0) 'Could not clean up the synthetic notification processing record.'
 
 [pscustomobject]@{
     Verification          = 'PASS'
@@ -204,6 +217,7 @@ Assert-True ($dispatchAfter.messages -eq 0 -and $deadLetterAfter.messages -eq 0)
     OpenApiNotification   = 'PASS'
     DurableTopicExchange  = 'PASS'
     DurableDispatchQueue  = 'PASS'
+    RetryTopology         = 'PASS'
     DispatchBinding       = 'PASS'
     DeadLetterTopology    = 'PASS'
     Unauthorized401       = 'PASS'
@@ -211,6 +225,7 @@ Assert-True ($dispatchAfter.messages -eq 0 -and $deadLetterAfter.messages -eq 0)
     NullParameters400     = 'PASS'
     AuthorizedPublish202  = 'PASS'
     PublisherConfirmRoute = 'PASS'
-    DeadLetterRoute       = 'PASS'
+    WorkerConsumer        = 'PASS'
     QueueCleanup          = 'PASS'
+    LedgerCleanup         = 'PASS'
 }

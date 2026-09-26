@@ -134,3 +134,15 @@ public sealed class RefreshToken
     public DateTime CreatedAtUtc { get; set; }
     public AppUser User { get; set; } = null!;
 }
+
+public sealed class NotificationProcessingRecord
+{
+    public Guid EventId { get; set; }
+    public DateTimeOffset OccurredAtUtc { get; set; }
+    public long RecipientUserId { get; set; }
+    public string Channel { get; set; } = string.Empty;
+    public string TemplateKey { get; set; } = string.Empty;
+    public string ParametersJson { get; set; } = string.Empty;
+    public string CorrelationId { get; set; } = string.Empty;
+    public DateTime ProcessedAtUtc { get; set; }
+}

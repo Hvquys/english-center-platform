@@ -6,11 +6,11 @@ GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
-DECLARE @ExpectedTables int = 9;
+DECLARE @ExpectedTables int = 10;
 DECLARE @ExpectedForeignKeys int = 9;
-DECLARE @ExpectedCheckConstraints int = 16;
+DECLARE @ExpectedCheckConstraints int = 17;
 DECLARE @ExpectedTriggers int = 7;
-DECLARE @ExpectedMigrationRows int = 2;
+DECLARE @ExpectedMigrationRows int = 3;
 
 DECLARE @ActualTables int = (
     SELECT COUNT(*)
@@ -18,7 +18,7 @@ DECLARE @ActualTables int = (
     WHERE name IN (
         'Students', 'Teachers', 'Courses', 'Classes',
         'Enrollments', 'AttendanceRecords', 'Payments',
-        'AppUsers', 'RefreshTokens'
+        'AppUsers', 'RefreshTokens', 'NotificationProcessingRecords'
     )
 );
 
@@ -46,7 +46,8 @@ DECLARE @ActualCheckConstraints int = (
         OBJECT_ID('dbo.Enrollments'),
         OBJECT_ID('dbo.AttendanceRecords'),
         OBJECT_ID('dbo.Payments'),
-        OBJECT_ID('dbo.AppUsers')
+        OBJECT_ID('dbo.AppUsers'),
+        OBJECT_ID('dbo.NotificationProcessingRecords')
     )
 );
 
@@ -69,15 +70,15 @@ DECLARE @ActualMigrationRows int = (
 );
 
 IF @ActualTables <> @ExpectedTables
-    THROW 51001, 'EF verification failed: expected 9 application tables.', 1;
+    THROW 51001, 'EF verification failed: expected 10 application tables.', 1;
 IF @ActualForeignKeys <> @ExpectedForeignKeys
     THROW 51002, 'EF verification failed: expected 9 foreign keys.', 1;
 IF @ActualCheckConstraints <> @ExpectedCheckConstraints
-    THROW 51003, 'EF verification failed: expected 16 check constraints.', 1;
+    THROW 51003, 'EF verification failed: expected 17 check constraints.', 1;
 IF @ActualTriggers <> @ExpectedTriggers
     THROW 51004, 'EF verification failed: expected 7 update triggers.', 1;
 IF @ActualMigrationRows <> @ExpectedMigrationRows
-    THROW 51005, 'EF verification failed: expected 2 migration history rows.', 1;
+    THROW 51005, 'EF verification failed: expected 3 migration history rows.', 1;
 
 IF NOT EXISTS (
     SELECT 1

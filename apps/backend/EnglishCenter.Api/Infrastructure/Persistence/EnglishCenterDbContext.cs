@@ -15,6 +15,7 @@ public sealed class EnglishCenterDbContext(DbContextOptions<EnglishCenterDbConte
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<AppUser> AppUsers => Set<AppUser>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<NotificationProcessingRecord> NotificationProcessingRecords => Set<NotificationProcessingRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

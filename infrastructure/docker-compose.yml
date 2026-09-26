@@ -36,12 +36,17 @@ services:
       Auth__BootstrapAdmin__Email: "${AUTH_BOOTSTRAP_ADMIN_EMAIL:?Set AUTH_BOOTSTRAP_ADMIN_EMAIL in infrastructure/.env}"
       Auth__BootstrapAdmin__Password: "${AUTH_BOOTSTRAP_ADMIN_PASSWORD:?Set AUTH_BOOTSTRAP_ADMIN_PASSWORD in infrastructure/.env}"
       Messaging__RabbitMq__Enabled: "true"
+      Messaging__RabbitMq__WorkerEnabled: "true"
       Messaging__RabbitMq__HostName: rabbitmq
       Messaging__RabbitMq__Port: "5672"
       Messaging__RabbitMq__VirtualHost: "/"
       Messaging__RabbitMq__UserName: "${RABBITMQ_USER:-ecp_app}"
       Messaging__RabbitMq__Password: "${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in infrastructure/.env}"
       Messaging__RabbitMq__ClientProvidedName: english-center-api
+      Messaging__RabbitMq__PublishTimeoutSeconds: "10"
+      Messaging__RabbitMq__RetryDelayMilliseconds: "1000"
+      Messaging__RabbitMq__MaxRetryAttempts: "3"
+      Messaging__RabbitMq__PrefetchCount: "1"
       Cache__Redis__Enabled: "true"
       Cache__Redis__ConnectionString: "redis:6379,password=${REDIS_PASSWORD:?Set REDIS_PASSWORD in infrastructure/.env},abortConnect=false,connectTimeout=5000,syncTimeout=5000"
       Cache__Redis__InstanceName: "english-center:"
