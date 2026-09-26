@@ -74,6 +74,11 @@ public sealed class GlobalExceptionHandler(
                 "One or more validation errors occurred.",
                 validationException.Message,
                 validationException.Errors.ToDictionary()),
+            DependencyUnavailableException => (
+                StatusCodes.Status503ServiceUnavailable,
+                "A required dependency is unavailable.",
+                exception.Message,
+                null),
             DbUpdateException { InnerException: SqlException { Number: 2601 or 2627 } } => (
                 StatusCodes.Status409Conflict,
                 "A unique value is already in use.",

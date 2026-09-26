@@ -1,12 +1,16 @@
 namespace EnglishCenter.Api.Api.ErrorHandling;
 
-public abstract class ApplicationExceptionBase(string message) : Exception(message);
+public abstract class ApplicationExceptionBase(string message, Exception? innerException = null)
+    : Exception(message, innerException);
 
 public sealed class ResourceNotFoundException(string message) : ApplicationExceptionBase(message);
 
 public sealed class ResourceConflictException(string message) : ApplicationExceptionBase(message);
 
 public sealed class AuthenticationFailedException(string message) : ApplicationExceptionBase(message);
+
+public sealed class DependencyUnavailableException(string message, Exception innerException)
+    : ApplicationExceptionBase(message, innerException);
 
 public sealed class RequestValidationException(
     string message,

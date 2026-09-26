@@ -5,13 +5,14 @@ business application, a data platform, observability, and an AI assistant.
 
 ## Current milestone
 
-M4 — Frontend React + TypeScript
+M5 — Application Integration with RabbitMQ
 
 The initial application consists of:
 
 - React and TypeScript frontend in `apps/web`
 - ASP.NET Core Web API in `apps/backend/EnglishCenter.Api`
 - SQL Server OLTP as the operational source of truth
+- RabbitMQ for durable notification integration events
 
 The data, observability, and AI components will be introduced in later
 milestones according to the project roadmap.
@@ -50,6 +51,39 @@ docker compose --env-file .\infrastructure\.env `
   -f .\infrastructure\docker-compose.yml up -d --build web
 .\scripts\web\verify-web-foundation.ps1
 ```
+
+## RabbitMQ notification topology
+
+The API now owns a durable RabbitMQ topology for notification requests:
+
+- topic exchange `english-center.notifications`
+- durable dispatch queue `english-center.notifications.dispatch`
+- binding `notification.*.requested`
+- direct dead-letter exchange `english-center.notifications.dlx`
+- durable dead-letter queue `english-center.notifications.dead-letter`
+- dead-letter routing key `notification.dead-letter`
+
+`POST /api/notifications` requires an `ADMIN` or `STAFF` bearer token. It
+accepts the request only after RabbitMQ confirms the persistent message. Email
+requests use `notification.email.requested`; in-app requests use
+`notification.in-app.requested`. TASK-015 will add the worker that consumes the
+dispatch queue, retries failures, and makes processing idempotent.
+
+RabbitMQ is enabled in Docker Compose and its username/password come from the
+ignored `infrastructure/.env` file. The committed settings contain no real
+credentials. Start or rebuild the stack, then run the repeatable acceptance
+check:
+
+```powershell
+docker compose --env-file .\infrastructure\.env `
+  -f .\infrastructure\docker-compose.yml up -d --build
+.\scripts\messaging\verify-rabbitmq-topology.ps1
+```
+
+The script verifies broker health, exchanges, queues, bindings, `401`, invalid
+request `400`, authorized `202`, publisher-confirmed routing, dead-letter
+routing, and final queue cleanup. It reads local credentials without printing
+passwords or tokens.
 
 ## EF Core database workflow
 
@@ -238,10 +272,10 @@ After every service reports healthy:
 - Frontend: <http://localhost:5173>
 - API health: <http://localhost:8080/api/health>
 
-Redis and RabbitMQ are defined for M5 under the `integration` profile. The
-PostgreSQL analytical DWH and MinIO RAW/Bronze storage are defined for M6 under
-the `data` profile. Defining these profiles does not make them part of the
-initial core runtime.
+RabbitMQ is now part of the core Compose runtime because the M5 API publishes
+notification events through it. Redis remains under the `integration` profile
+until TASK-016. The PostgreSQL analytical DWH and MinIO RAW/Bronze storage are
+defined for M6 under the `data` profile.
 
 ```powershell
 docker compose --env-file .\infrastructure\.env `

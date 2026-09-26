@@ -35,10 +35,19 @@ services:
       Jwt__SigningKey: "${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in infrastructure/.env}"
       Auth__BootstrapAdmin__Email: "${AUTH_BOOTSTRAP_ADMIN_EMAIL:?Set AUTH_BOOTSTRAP_ADMIN_EMAIL in infrastructure/.env}"
       Auth__BootstrapAdmin__Password: "${AUTH_BOOTSTRAP_ADMIN_PASSWORD:?Set AUTH_BOOTSTRAP_ADMIN_PASSWORD in infrastructure/.env}"
+      Messaging__RabbitMq__Enabled: "true"
+      Messaging__RabbitMq__HostName: rabbitmq
+      Messaging__RabbitMq__Port: "5672"
+      Messaging__RabbitMq__VirtualHost: "/"
+      Messaging__RabbitMq__UserName: "${RABBITMQ_USER:-ecp_app}"
+      Messaging__RabbitMq__Password: "${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in infrastructure/.env}"
+      Messaging__RabbitMq__ClientProvidedName: english-center-api
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
       sqlserver:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: [CMD, curl, --fail, --silent, http://localhost:8080/api/health]
@@ -96,7 +105,6 @@ services:
 
   rabbitmq:
     image: rabbitmq:4.2-management-alpine
-    profiles: [integration]
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ecp_app}

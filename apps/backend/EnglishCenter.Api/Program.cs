@@ -7,6 +7,7 @@ using EnglishCenter.Api.Modules.Classes;
 using EnglishCenter.Api.Modules.Courses;
 using EnglishCenter.Api.Modules.Enrollments;
 using EnglishCenter.Api.Modules.Health;
+using EnglishCenter.Api.Modules.Messaging;
 using EnglishCenter.Api.Modules.Payments;
 using EnglishCenter.Api.Modules.Students;
 using EnglishCenter.Api.Modules.Teachers;
@@ -35,6 +36,7 @@ builder.Services.AddDbContext<EnglishCenterDbContext>(options =>
 
 builder.Services.AddHealthModule();
 builder.Services.AddAuthModule(builder.Configuration);
+builder.Services.AddMessagingModule(builder.Configuration);
 builder.Services.AddAttendanceModule();
 builder.Services.AddCoursesModule();
 builder.Services.AddClassesModule();
