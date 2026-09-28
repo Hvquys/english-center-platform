@@ -165,9 +165,19 @@ finally {
     Invoke-SqlScalar "DELETE FROM dbo.NotificationProcessingRecords WHERE event_id IN ('$validEventId', '$invalidEventId'); SELECT 1;" | Out-Null
 }
 
-$dispatchAfter = Get-Queue $dispatchQueue
-$retryAfter = Get-Queue $retryQueue
-$deadLetterAfter = Get-Queue $deadLetterQueue
+$dispatchAfter = $null
+$retryAfter = $null
+$deadLetterAfter = $null
+for ($attempt = 0; $attempt -lt 60; $attempt++) {
+    $dispatchAfter = Get-Queue $dispatchQueue
+    $retryAfter = Get-Queue $retryQueue
+    $deadLetterAfter = Get-Queue $deadLetterQueue
+    if ($dispatchAfter.messages -eq 0 -and $retryAfter.messages -eq 0 -and $deadLetterAfter.messages -eq 0) {
+        break
+    }
+
+    Start-Sleep -Milliseconds 250
+}
 Assert-True ($dispatchAfter.messages -eq 0 -and $retryAfter.messages -eq 0 -and $deadLetterAfter.messages -eq 0) 'Acceptance queues were not empty after cleanup.'
 
 [pscustomobject]@{

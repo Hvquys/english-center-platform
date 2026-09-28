@@ -14,10 +14,38 @@ public sealed class NotificationWorker(
     ILogger<NotificationWorker> logger) : BackgroundService
 {
     private const string RetryCountHeader = "x-retry-count";
+    private static readonly TimeSpan RecoveryDelay = TimeSpan.FromSeconds(2);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly RabbitMqOptions _options = options.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await ConsumeUntilChannelClosesAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(
+                    exception,
+                    "Notification worker connection failed; retrying in {RecoveryDelaySeconds} seconds.",
+                    RecoveryDelay.TotalSeconds);
+            }
+
+            if (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(RecoveryDelay, stoppingToken);
+            }
+        }
+    }
+
+    private async Task ConsumeUntilChannelClosesAsync(CancellationToken stoppingToken)
     {
         var rabbitConnection = await connection.GetAsync(stoppingToken);
         var channelOptions = new CreateChannelOptions(
@@ -42,7 +70,10 @@ public sealed class NotificationWorker(
 
         try
         {
-            await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
+            while (channel.IsOpen && !stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+            }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -54,6 +85,11 @@ public sealed class NotificationWorker(
             {
                 await channel.BasicCancelAsync(consumerTag, noWait: false, CancellationToken.None);
             }
+        }
+
+        if (!stoppingToken.IsCancellationRequested)
+        {
+            logger.LogWarning("Notification worker channel closed; starting the recovery loop.");
         }
     }
 
@@ -100,7 +136,10 @@ public sealed class NotificationWorker(
                 "Notification message {MessageId} failed after {RetryCount} retries and will move to the dead-letter queue.",
                 delivery.BasicProperties.MessageId,
                 retryCount);
-            await channel.BasicNackAsync(delivery.DeliveryTag, multiple: false, requeue: false, cancellationToken);
+            if (channel.IsOpen)
+            {
+                await channel.BasicNackAsync(delivery.DeliveryTag, multiple: false, requeue: false, cancellationToken);
+            }
             return;
         }
 
@@ -149,7 +188,10 @@ public sealed class NotificationWorker(
                 retryException,
                 "Could not schedule retry for notification message {MessageId}; RabbitMQ will requeue the original delivery.",
                 delivery.BasicProperties.MessageId);
-            await channel.BasicNackAsync(delivery.DeliveryTag, multiple: false, requeue: true, cancellationToken);
+            if (channel.IsOpen)
+            {
+                await channel.BasicNackAsync(delivery.DeliveryTag, multiple: false, requeue: true, cancellationToken);
+            }
         }
     }
 

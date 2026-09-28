@@ -149,6 +149,26 @@ confirms the Redis TTL and hashed key, shortens only that test key to prove the
 next window starts cleanly, verifies the OpenAPI 429 contracts, and removes the
 test key.
 
+## M5 failure and recovery verification
+
+The notification worker recreates its consumer when the RabbitMQ channel
+closes. This matters when a broker restarts or the shared connection is
+replaced by a health check or publisher after an outage.
+
+Run the M5 resilience check from the repository root:
+
+```powershell
+.\scripts\integration\verify-m5-resilience.ps1
+```
+
+The script stops Redis and RabbitMQ one at a time, verifies dependency health
+changes, confirms SQL-backed APIs continue when the unavailable dependency is
+not required, checks login rate limiting fails open during a Redis outage, and
+checks notification publishing returns HTTP 503 while RabbitMQ is unavailable.
+It then restarts each service and reruns the cache, rate-limit, topology,
+consumer, idempotency, retry, and dead-letter acceptance checks. A `finally`
+block restores any dependency that remained stopped after a failed assertion.
+
 ## EF Core database workflow
 
 The backend maps the seven initial OLTP entities with EF Core. Migrations are

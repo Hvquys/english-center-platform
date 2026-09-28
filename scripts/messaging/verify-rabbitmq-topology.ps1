@@ -147,6 +147,16 @@ Assert-True ($dispatch.arguments.'x-dead-letter-exchange' -eq $deadLetterExchang
 Assert-True ($dispatch.arguments.'x-dead-letter-routing-key' -eq $deadLetterRoutingKey) 'Dispatch queue does not use the expected dead-letter routing key.'
 Assert-True ($retry.arguments.'x-dead-letter-exchange' -eq $exchangeName) 'Retry queue does not route expired messages back to the main exchange.'
 Assert-True ($retry.arguments.'x-message-ttl' -ge 100) 'Retry queue does not have a retry delay.'
+for ($attempt = 0; $attempt -lt 30; $attempt++) {
+    if ($dispatch.consumers -ge 1 -and $dispatch.messages -eq 0 -and $retry.messages -eq 0 -and $deadLetter.messages -eq 0) {
+        break
+    }
+
+    Start-Sleep -Seconds 1
+    $dispatch = Get-Queue $dispatchQueue
+    $retry = Get-Queue $retryQueue
+    $deadLetter = Get-Queue $deadLetterQueue
+}
 Assert-True ($dispatch.consumers -ge 1) 'Notification worker is not consuming the dispatch queue.'
 
 $dispatchBindings = Invoke-RabbitManagement -Path "/api/bindings/%2F/e/$encodedExchange/q/$encodedDispatchQueue"
