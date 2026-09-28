@@ -312,6 +312,25 @@ Run the end-to-end acceptance check:
 The script verifies attendance date and duplicate guards, payment lifecycle and
 overpayment prevention, stale-write handling, filters, cleanup, and OpenAPI.
 
+## Application Core integration verification
+
+The TASK-012 integration check follows one isolated fixture through the same
+frontend proxy used by the React application: student, course and class,
+enrollment, attendance, and payment. It also checks TEACHER/STUDENT permissions,
+validation and business conflicts, optimistic concurrency, cross-module data,
+and targeted cleanup. Generated passwords and access tokens remain in memory
+and are never printed or saved.
+
+Start the complete Docker stack, then run:
+
+```powershell
+.\scripts\integration\verify-application-core.ps1
+```
+
+Every property in the final result must report `PASS`. The script creates
+timestamped records and removes only those records in a `finally` cleanup block,
+so existing local data is not reset or deleted.
+
 ## Project documentation
 
 - The project-wide build journal covers the complete M1-M10 delivery process.
