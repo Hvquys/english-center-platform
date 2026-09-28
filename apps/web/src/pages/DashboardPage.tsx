@@ -49,7 +49,7 @@ export function DashboardPage() {
 
       <section className="content-card">
         <div className="section-heading"><div><p className="eyebrow">Application Core</p>
-          <h2>Các khu vực quản lý</h2></div><span>Giao diện chi tiết thuộc TASK-011</span></div>
+          <h2>Các khu vực quản lý</h2></div><span>Đã kết nối với API nghiệp vụ</span></div>
         <div className="module-grid">
           {modules.map(([name, description, status]) => (
             <article className="module-card" key={name}>

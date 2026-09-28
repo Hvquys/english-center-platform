@@ -3,6 +3,8 @@ import { useAuth } from '../auth/auth-context'
 
 export function AppShell() {
   const { user, logout } = useAuth()
+  const isStaff = user?.role === 'ADMIN' || user?.role === 'STAFF'
+  const canTeach = isStaff || user?.role === 'TEACHER'
 
   return (
     <div className="app-shell">
@@ -16,9 +18,11 @@ export function AppShell() {
         </div>
         <nav aria-label="Điều hướng chính">
           <NavLink to="/dashboard">Tổng quan</NavLink>
-          <span className="nav-placeholder" aria-disabled="true">Học viên</span>
-          <span className="nav-placeholder" aria-disabled="true">Lớp học</span>
-          <span className="nav-placeholder" aria-disabled="true">Thanh toán</span>
+          {isStaff && <NavLink to="/students">Học viên</NavLink>}
+          <NavLink to="/classes">Lớp học</NavLink>
+          {isStaff && <NavLink to="/enrollments">Ghi danh</NavLink>}
+          {canTeach && <NavLink to="/attendance">Điểm danh</NavLink>}
+          {isStaff && <NavLink to="/payments">Thanh toán</NavLink>}
         </nav>
         <div className="sidebar-foot">
           <span className="role-badge">{user?.role}</span>

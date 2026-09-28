@@ -5,6 +5,7 @@ import { AppShell } from './layout/AppShell'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { AttendancePage, ClassesPage, EnrollmentsPage, PaymentsPage, StudentsPage } from './pages/BusinessPages'
 import './App.css'
 
 function App() {
@@ -17,6 +18,11 @@ function App() {
             <Route element={<AppShell />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="students" element={<StudentsPage />} />
+              <Route path="classes" element={<ClassesPage />} />
+              <Route path="enrollments" element={<EnrollmentsPage />} />
+              <Route path="attendance" element={<AttendancePage />} />
+              <Route path="payments" element={<PaymentsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFoundPage />} />
