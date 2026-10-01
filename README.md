@@ -5,7 +5,7 @@ business application, a data platform, observability, and an AI assistant.
 
 ## Current milestone
 
-M5 — Application Integration with RabbitMQ and Redis
+M1–M5 application core completed; preparing the M6 data pipeline
 
 The initial application consists of:
 
@@ -15,8 +15,22 @@ The initial application consists of:
 - RabbitMQ for durable notification integration events
 - Redis for short-lived application query caching
 
-The data, observability, and AI components will be introduced in later
-milestones according to the project roadmap.
+The M6 data pipeline, M7 analytics, M8 observability, M9 AI assistant, and M10
+advanced capabilities will be introduced according to the project roadmap.
+Debezium, Kafka, dbt, Kubernetes, Terraform, and Cloud/Lakehouse remain
+future/advanced work rather than initial core dependencies.
+
+## Architecture Version 2
+
+![English Center Platform Architecture Version 2](docs/architecture/architecture-v2.svg)
+
+The diagram distinguishes the implemented M1–M5 application core from planned
+M6–M9 components and future/advanced M10 options. SQL Server is the OLTP source
+of truth. PostgreSQL is an analytical DWH populated through the data pipeline;
+it is not a one-to-one SQL Server replica.
+
+- [Architecture decisions and data flow](docs/architecture/architecture-v2.md)
+- [First-time and daily local development guide](docs/LOCAL_DEVELOPMENT.md)
 
 ## Frontend foundation and login
 
@@ -335,6 +349,10 @@ so existing local data is not reset or deleted.
 
 - The project-wide build journal covers the complete M1-M10 delivery process.
 - Journal entries follow [`docs/PROJECT_JOURNAL_GUIDE.md`](docs/PROJECT_JOURNAL_GUIDE.md).
+- Architecture boundaries follow
+  [`docs/architecture/architecture-v2.md`](docs/architecture/architecture-v2.md).
+- Local setup and troubleshooting follow
+  [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
 - After each completed or materially changed task, update the journal and the
   project management Sheet, then create a Git checkpoint when the state is
   coherent and verified.

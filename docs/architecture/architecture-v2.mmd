@@ -1,0 +1,43 @@
+flowchart LR
+  U[Users] --> WEB[React + TypeScript]
+  WEB --> NGINX[Nginx /api proxy]
+  NGINX --> API[ASP.NET Core modular monolith]
+  API --> SQL[(SQL Server OLTP\nSource of Truth)]
+  API <--> REDIS[(Redis\nCache + Rate Limits)]
+  API --> RMQ[RabbitMQ]
+  RMQ --> WORKER[Notification Worker]
+  WORKER --> SQL
+
+  SQL --> ETL[Python incremental ETL]
+  AIRFLOW[Airflow] -. orchestrates .-> ETL
+  ETL --> MINIO[(MinIO RAW/Bronze)]
+  MINIO --> SPARK[Spark / PySpark]
+  SPARK --> DWH[(PostgreSQL DWH\nAnalytical, not 1:1)]
+  DWH --> MART[Star Schema + Data Marts]
+  MART --> DQ[Data Quality + Reconciliation]
+  DQ --> PBI[Power BI]
+
+  API -. telemetry .-> OTEL[OpenTelemetry]
+  OTEL --> PROM[Prometheus]
+  OTEL --> LOKI[Loki]
+  PROM --> GRAFANA[Grafana]
+  LOKI --> GRAFANA
+
+  DWH --> PGVECTOR[pgvector]
+  PGVECTOR --> RAG[RAG + Ollama]
+  RAG --> AIAPI[AI API .NET / Python]
+  AIAPI --> WEB
+  AIAPI -. traces .-> LANGFUSE[Langfuse]
+
+  SQL -. future CDC .-> DEBEZIUM[Debezium]
+  DEBEZIUM -. future streaming .-> KAFKA[Kafka]
+  KAFKA -. future sink .-> MINIO
+  DBT[dbt optional] -. SQL models .-> DWH
+  PLATFORM[Kubernetes / Terraform / Cloud / Lakehouse] -. future deployment .-> API
+
+  classDef implemented fill:#e8f6ef,stroke:#16825d,color:#123b30,stroke-width:2px
+  classDef planned fill:#edf4ff,stroke:#2867b2,color:#15365e,stroke-width:2px,stroke-dasharray:6 4
+  classDef future fill:#f3f4f6,stroke:#6b7280,color:#374151,stroke-width:2px,stroke-dasharray:3 5
+  class U,WEB,NGINX,API,SQL,REDIS,RMQ,WORKER implemented
+  class ETL,AIRFLOW,MINIO,SPARK,DWH,MART,DQ,PBI,OTEL,PROM,LOKI,GRAFANA,PGVECTOR,RAG,AIAPI,LANGFUSE planned
+  class DEBEZIUM,KAFKA,DBT,PLATFORM future

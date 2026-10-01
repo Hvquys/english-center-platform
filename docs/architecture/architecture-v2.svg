@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120" role="img" aria-labelledby="title description">
+  <title id="title">English Center Platform — Architecture Version 2</title>
+  <desc id="description">Implemented application core, planned data, analytics, observability and AI layers, and future advanced options.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="1" stop-color="#f4f7f5"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#18324a" flood-opacity=".12"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#38566e"/>
+    </marker>
+    <style>
+      text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#18324a}
+      .title{font-size:36px;font-weight:700}.subtitle{font-size:17px;fill:#53697a}
+      .lane-title{font-size:20px;font-weight:700}.box-title{font-size:17px;font-weight:700}
+      .box-copy{font-size:14px;fill:#43596b}.small{font-size:13px;fill:#53697a}
+      .lane{fill:#fff;stroke:#d6e0e7;stroke-width:1.5;rx:22}
+      .implemented{fill:#e8f6ef;stroke:#16825d;stroke-width:2.2;rx:14}
+      .planned{fill:#edf4ff;stroke:#2867b2;stroke-width:2.2;stroke-dasharray:8 5;rx:14}
+      .future{fill:#f3f4f6;stroke:#6b7280;stroke-width:2.2;stroke-dasharray:4 6;rx:14}
+      .arrow{fill:none;stroke:#38566e;stroke-width:2.2;marker-end:url(#arrow)}
+      .planned-arrow{fill:none;stroke:#2867b2;stroke-width:2.2;stroke-dasharray:7 5;marker-end:url(#arrow)}
+      .future-arrow{fill:none;stroke:#6b7280;stroke-width:2;stroke-dasharray:3 6;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1600" height="1120" fill="url(#background)"/>
+  <text x="70" y="66" class="title">English Center Platform — Architecture Version 2</text>
+  <text x="70" y="96" class="subtitle">SQL Server owns transactions · PostgreSQL serves analytics · streaming remains future/advanced</text>
+
+  <rect x="1090" y="38" width="140" height="36" class="implemented"/><text x="1112" y="62" class="small">Implemented M1–M5</text>
+  <rect x="1245" y="38" width="135" height="36" class="planned"/><text x="1276" y="62" class="small">Planned M6–M9</text>
+  <rect x="1380" y="38" width="155" height="36" class="future"/><text x="1397" y="62" class="small">Future / advanced</text>
+
+  <rect x="55" y="125" width="1490" height="285" class="lane" filter="url(#shadow)"/>
+  <text x="80" y="158" class="lane-title">Application Core · implemented</text>
+  <rect x="90" y="205" width="155" height="85" class="implemented"/>
+  <text x="138" y="238" class="box-title">Users</text><text x="116" y="264" class="box-copy">Admin · Staff</text><text x="109" y="282" class="box-copy">Teacher · Student</text>
+  <rect x="310" y="205" width="190" height="85" class="implemented"/>
+  <text x="336" y="238" class="box-title">React + TypeScript</text><text x="342" y="264" class="box-copy">SPA · typed contracts</text><text x="355" y="282" class="box-copy">RBAC-aware UI</text>
+  <rect x="570" y="205" width="165" height="85" class="implemented"/>
+  <text x="616" y="238" class="box-title">Nginx</text><text x="594" y="264" class="box-copy">static web + /api proxy</text>
+  <rect x="810" y="185" width="250" height="125" class="implemented"/>
+  <text x="846" y="220" class="box-title">ASP.NET Core Web API</text><text x="844" y="247" class="box-copy">EF Core modular monolith</text><text x="840" y="270" class="box-copy">JWT · RBAC · Problem Details</text><text x="867" y="293" class="box-copy">optimistic concurrency</text>
+  <rect x="1140" y="155" width="220" height="85" class="implemented"/>
+  <text x="1170" y="188" class="box-title">SQL Server OLTP</text><text x="1188" y="214" class="box-copy">Source of Truth</text>
+  <rect x="1140" y="265" width="170" height="75" class="implemented"/>
+  <text x="1199" y="296" class="box-title">Redis</text><text x="1167" y="321" class="box-copy">cache + rate limits</text>
+  <rect x="1370" y="155" width="140" height="75" class="implemented"/>
+  <text x="1401" y="188" class="box-title">RabbitMQ</text><text x="1397" y="213" class="box-copy">durable events</text>
+  <rect x="1370" y="265" width="140" height="75" class="implemented"/>
+  <text x="1398" y="296" class="box-title">Worker</text><text x="1387" y="321" class="box-copy">retry · DLQ · ledger</text>
+  <path d="M245 247 H310" class="arrow"/><path d="M500 247 H570" class="arrow"/><path d="M735 247 H810" class="arrow"/>
+  <path d="M1060 215 H1140" class="arrow"/><path d="M1140 302 H1060" class="arrow"/><path d="M1060 275 H1140" class="arrow"/>
+  <path d="M1060 198 C1190 115 1280 115 1370 190" class="arrow"/><path d="M1440 230 V265" class="arrow"/>
+  <path d="M1370 312 C1325 365 1260 365 1250 240" class="arrow"/>
+
+  <rect x="55" y="435" width="1490" height="300" class="lane" filter="url(#shadow)"/>
+  <text x="80" y="470" class="lane-title">Data Pipeline and Analytics · planned M6–M7</text>
+  <rect x="90" y="520" width="185" height="85" class="implemented"/>
+  <text x="116" y="553" class="box-title">SQL Server OLTP</text><text x="129" y="579" class="box-copy">updated_at watermark</text>
+  <rect x="335" y="520" width="190" height="85" class="planned"/>
+  <text x="363" y="553" class="box-title">Python incremental ETL</text><text x="378" y="579" class="box-copy">extract · checkpoint</text>
+  <rect x="585" y="520" width="190" height="85" class="planned"/>
+  <text x="615" y="553" class="box-title">MinIO RAW/Bronze</text><text x="613" y="579" class="box-copy">immutable · replayable</text>
+  <rect x="835" y="520" width="185" height="85" class="planned"/>
+  <text x="865" y="553" class="box-title">Spark / PySpark</text><text x="864" y="579" class="box-copy">validate · transform</text>
+  <rect x="1080" y="510" width="205" height="105" class="planned"/>
+  <text x="1107" y="545" class="box-title">PostgreSQL DWH</text><text x="1116" y="572" class="box-copy">analytical models</text><text x="1122" y="594" class="box-copy">not a 1:1 replica</text>
+  <rect x="1345" y="520" width="160" height="85" class="planned"/>
+  <text x="1386" y="553" class="box-title">Power BI</text><text x="1369" y="579" class="box-copy">reports · dashboards</text>
+  <rect x="335" y="640" width="190" height="65" class="planned"/>
+  <text x="391" y="669" class="box-title">Airflow</text><text x="365" y="691" class="box-copy">orchestration · retries</text>
+  <rect x="1080" y="640" width="205" height="65" class="planned"/>
+  <text x="1109" y="669" class="box-title">Star schema · marts</text><text x="1111" y="691" class="box-copy">grain · dimensions · facts</text>
+  <rect x="1345" y="640" width="160" height="65" class="planned"/>
+  <text x="1362" y="669" class="box-title">DQ + Reconciliation</text><text x="1375" y="691" class="box-copy">source vs warehouse</text>
+  <path d="M275 562 H335" class="planned-arrow"/><path d="M525 562 H585" class="planned-arrow"/><path d="M775 562 H835" class="planned-arrow"/>
+  <path d="M1020 562 H1080" class="planned-arrow"/>
+  <path d="M430 640 V605" class="planned-arrow"/><path d="M1182 615 V640" class="planned-arrow"/><path d="M1285 672 H1345" class="planned-arrow"/><path d="M1425 640 V605" class="planned-arrow"/>
+
+  <rect x="55" y="760" width="720" height="205" class="lane" filter="url(#shadow)"/>
+  <text x="80" y="795" class="lane-title">Observability · planned M8</text>
+  <rect x="90" y="835" width="170" height="75" class="planned"/><text x="116" y="868" class="box-title">OpenTelemetry</text><text x="120" y="894" class="box-copy">metrics · traces</text>
+  <rect x="320" y="815" width="155" height="65" class="planned"/><text x="351" y="853" class="box-title">Prometheus</text>
+  <rect x="320" y="895" width="155" height="55" class="planned"/><text x="378" y="929" class="box-title">Loki</text>
+  <rect x="540" y="835" width="170" height="75" class="planned"/><text x="589" y="868" class="box-title">Grafana</text><text x="567" y="894" class="box-copy">dashboards · alerts</text>
+  <path d="M260 860 H320" class="planned-arrow"/><path d="M260 885 C285 920 295 920 320 922" class="planned-arrow"/>
+  <path d="M475 848 H540" class="planned-arrow"/><path d="M475 922 C505 922 510 885 540 885" class="planned-arrow"/>
+
+  <rect x="805" y="760" width="740" height="205" class="lane" filter="url(#shadow)"/>
+  <text x="830" y="795" class="lane-title">AI Assistant · planned M9</text>
+  <rect x="840" y="835" width="150" height="75" class="planned"/><text x="877" y="868" class="box-title">pgvector</text><text x="866" y="894" class="box-copy">embeddings</text>
+  <rect x="1040" y="835" width="155" height="75" class="planned"/><text x="1084" y="868" class="box-title">Ollama</text><text x="1067" y="894" class="box-copy">RAG · local LLM</text>
+  <rect x="1245" y="825" width="160" height="95" class="planned"/><text x="1272" y="858" class="box-title">AI API</text><text x="1264" y="883" class="box-copy">.NET / Python</text><text x="1263" y="905" class="box-copy">Text-to-SQL guard</text>
+  <rect x="1440" y="835" width="80" height="75" class="planned"/><text x="1449" y="868" class="box-title">Langfuse</text><text x="1456" y="894" class="box-copy">traces</text>
+  <path d="M990 872 H1040" class="planned-arrow"/><path d="M1195 872 H1245" class="planned-arrow"/><path d="M1405 872 H1440" class="planned-arrow"/>
+
+  <rect x="55" y="990" width="1490" height="90" class="lane" filter="url(#shadow)"/>
+  <text x="80" y="1025" class="lane-title">Future / advanced M10</text>
+  <rect x="390" y="1008" width="220" height="50" class="future"/><text x="420" y="1040" class="box-title">Debezium CDC → Kafka</text>
+  <rect x="660" y="1008" width="155" height="50" class="future"/><text x="690" y="1040" class="box-title">dbt optional</text>
+  <rect x="865" y="1008" width="335" height="50" class="future"/><text x="902" y="1040" class="box-title">Kubernetes · Terraform · Cloud</text>
+  <rect x="1250" y="1008" width="220" height="50" class="future"/><text x="1295" y="1040" class="box-title">Lakehouse targets</text>
+  <text x="70" y="1102" class="small">Architecture status as of TASK-013 · solid green = implemented · dashed blue = planned · dotted gray = future/advanced</text>
+</svg>
